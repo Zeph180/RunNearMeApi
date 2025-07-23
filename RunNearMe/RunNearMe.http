@@ -1,0 +1,6 @@
+@RunNearMe_HostAddress = http://localhost:5133
+
+GET {{RunNearMe_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
