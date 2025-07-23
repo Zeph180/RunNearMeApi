@@ -2,5 +2,5 @@
 
 public interface IRunner
 {
-    Task CreateRunner<RunnerDto, Runner>();
+    Task<Runner> CreateRunner<RunnerDto, Runner>(RunnerDto runnerDto);
 }
