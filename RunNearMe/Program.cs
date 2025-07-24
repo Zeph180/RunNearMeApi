@@ -1,3 +1,4 @@
+using Application.Exensions;
 using Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Repository.Mapping;
@@ -25,9 +26,12 @@ public class Program
         
         builder.Services.AddAutoMapper(_ => { }, typeof(MapperService).Assembly);
         builder.Services.AddControllers();
+        builder.Services.AddLogging();
         builder.Services.AddScoped<IRunner, RunnerRepository>();
 
         var app = builder.Build();
+
+        app.UseGlobalExceptionHandling();
 
         // Configure the HTTP request pipeline.e
         if (app.Environment.IsDevelopment())
@@ -36,6 +40,7 @@ public class Program
             app.UseSwaggerUI();
         }
 
+        app.UseRouting();
         app.UseHttpsRedirection();
 
         app.UseAuthorization();

@@ -3,9 +3,9 @@
 public class BusinessException : Exception
 {
     public string ErrorCode { get; }
-    public string StatusCode { get; }
+    public int StatusCode { get; }
 
-    public BusinessException(string message, string errorCode = "BUSINESS_ERROR", string statusCode = "400") : base(message)
+    public BusinessException(string message, string errorCode = "BUSINESS_ERROR", int statusCode = 400) : base(message)
     {
         ErrorCode = errorCode;
         StatusCode = statusCode;
