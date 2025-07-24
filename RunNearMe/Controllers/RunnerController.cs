@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace RunNearMe.Controllers;
 
+[Route("api/[controller]")]
+[ApiController]
+
 public class RunnerController : ControllerBase
 {
     private readonly IRunner _runner;
@@ -15,6 +18,7 @@ public class RunnerController : ControllerBase
         _runner = runner;
     }
     
+    [HttpPost("signup")]
     public async Task<IActionResult> CreateRunner(RunnerDto runnerDto)
     {
        var response = await _runner.CreateRunner<RunnerDto, Runner>(runnerDto);
