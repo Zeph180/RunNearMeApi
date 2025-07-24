@@ -1,5 +1,10 @@
 using Application.Exensions;
+using Application.Filters;
 using Application.Interfaces;
+using Application.Validators;
+using FluentValidation;
+using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Repository.Mapping;
 using Repository.Persistence;
@@ -25,24 +30,34 @@ public class Program
         builder.Services.AddSwaggerGen();
         
         builder.Services.AddAutoMapper(_ => { }, typeof(MapperService).Assembly);
-        builder.Services.AddControllers();
+        builder.Services.AddScoped<ValidationFilter>();
+        builder.Services.AddControllers(
+            options => options.Filters.Add<ValidationFilter>());
         builder.Services.AddLogging();
         builder.Services.AddScoped<IRunner, RunnerRepository>();
+        
+        builder.Services.AddFluentValidationAutoValidation();
+        builder.Services.AddFluentValidationClientsideAdapters();
+        builder.Services.AddValidatorsFromAssemblyContaining<RunnerValidation>();
+
+// Disable default model validation to use only FluentValidation
+        builder.Services.Configure<ApiBehaviorOptions>(options =>
+        {
+            options.SuppressModelStateInvalidFilter = true;
+        });
 
         var app = builder.Build();
-
-        app.UseGlobalExceptionHandling();
-
+        
         // Configure the HTTP request pipeline.e
         if (app.Environment.IsDevelopment())
         {
             app.UseSwagger();
             app.UseSwaggerUI();
         }
+        
+        app.UseGlobalExceptionHandling();
 
-        app.UseRouting();
         app.UseHttpsRedirection();
-
         app.UseAuthorization();
         app.MapControllers();
 
