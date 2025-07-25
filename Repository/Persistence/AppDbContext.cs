@@ -10,4 +10,5 @@ public class AppDbContext : DbContext
     }
     
     public DbSet<Runner> Runners { get; set; }
+    public DbSet<Run> Runs { get; set; }
 }
