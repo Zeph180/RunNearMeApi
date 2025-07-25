@@ -26,11 +26,11 @@ public class GlobalExceptionHandlingMiddleware
         catch (Exception ex)
         {
             _logger.LogError(ex, "An unhandled exception occured");
-            await handleExceptionAsync(context, ex);
+            await HandleExceptionAsync(context, ex);
         }
     }
     
-    private async Task handleExceptionAsync(HttpContext context, Exception exception)
+    private async Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
         var response = context.Response;
         response.ContentType = "application/json";

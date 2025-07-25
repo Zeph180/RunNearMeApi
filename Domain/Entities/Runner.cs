@@ -21,4 +21,10 @@ public class Runner
     public int Height { get; set; }
     [Range(10, 200)]
     public int Weight { get; set; }
+    public Run[]? Runs { get; set; }
+    public Notification[]? Notifications { get; set; }
+    public Friend[]? Friends { get; set; }
+    public Post[]? Posts { get; set; }
+    public Challenge[]? Challenges { get; set; }
+    public Group[]? Groups { get; set; }
 }
