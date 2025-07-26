@@ -2,6 +2,7 @@
 using Application.Interfaces;
 using Application.Interfaces.Dtos;
 using Domain.Entities;
+using Domain.Models.Request.Account;
 using Microsoft.AspNetCore.Mvc;
 
 namespace RunNearMe.Controllers;
@@ -23,5 +24,12 @@ public class RunnerController : ControllerBase
     {
        var response = await _runner.CreateRunner<RunnerDto, Runner>(runnerDto);
        return Ok(response);
+    }
+
+    [HttpPost("createAccount")]
+    public async Task<IActionResult> CreateAccount(AccountCreateRequest request)
+    {
+        var response = await _runner.CreateAccount(request);
+        return Ok(response);
     }
 }

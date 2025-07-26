@@ -9,5 +9,5 @@ public class Group
     public DateTime CreatedAt { get; set; }
     public bool IsDeleted { get; set; }
     public DateTime? DeletedAt { get; set; }
-    public Runner[]? Runners { get; set; }
+    public ICollection<Profile>? Profiles { get; set; }
 }

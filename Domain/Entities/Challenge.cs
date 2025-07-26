@@ -10,5 +10,5 @@ public class Challenge
     public required string ImageUrl { get; set; }
     public DateTime CreatedAt { get; set; }
     public bool IsDeleted { get; set; }
-    public required Runner[] Runners { get; set; }
+    public ICollection<Profile> Profiles { get; set; }
 }

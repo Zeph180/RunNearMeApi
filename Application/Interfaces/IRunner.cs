@@ -1,6 +1,11 @@
-﻿namespace Application.Interfaces;
+﻿using Application.Interfaces.Dtos;
+using Domain.Entities;
+using Domain.Models.Request.Account;
+
+namespace Application.Interfaces;
 
 public interface IRunner
 {
-    Task<Runner> CreateRunner<RunnerDto, Runner>(RunnerDto runnerDto);
+    Task<T2> CreateRunner<T1,T2>(T1 runnerDto);
+    Task<RunnerDto> CreateAccount(AccountCreateRequest request);
 }
