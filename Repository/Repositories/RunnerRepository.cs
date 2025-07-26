@@ -5,6 +5,7 @@ using AutoMapper;
 using Domain.Entities;
 using Domain.Models;
 using Domain.Models.Request.Account;
+using Domain.Models.Response;
 using Microsoft.EntityFrameworkCore;
 using Repository.Persistence;
 
@@ -30,11 +31,9 @@ public class RunnerRepository : IRunner
         return runner;
     }
 
-    public async Task<RunnerDto> CreateAccount(AccountCreateRequest request)
+    public async Task<CreateAccountResponse> CreateAccount(AccountCreateRequest request)
     {
-        var existingRunner = await _dbContext.Runners
-            .FirstOrDefaultAsync(r => r.Email == request.Email);
-        if (existingRunner != null)
+        if (await _dbContext.Runners.AnyAsync(r => r.Email == request.Email))
         {
             throw new BusinessException(
                 "An account with this email already exists.",
@@ -45,6 +44,6 @@ public class RunnerRepository : IRunner
         var runner = _mapper.Map<AccountCreateRequest, Runner>(request);
         var resp = await _dbContext.AddAsync(runner);
         await _dbContext.SaveChangesAsync();
-        return _mapper.Map<Runner, RunnerDto>(runner);
+        return _mapper.Map<Runner, CreateAccountResponse>(runner);
     }
 }

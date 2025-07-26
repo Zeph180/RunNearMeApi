@@ -18,15 +18,12 @@ public class RunnerController : ControllerBase
     {
         _runner = runner;
     }
-    
+    /// <summary>
+    /// This method is responsible for creating new user accounts
+    /// </summary>
+    /// <param name="request"></param>
+    /// <returns></returns>
     [HttpPost("signup")]
-    public async Task<IActionResult> CreateRunner(RunnerDto runnerDto)
-    {
-       var response = await _runner.CreateRunner<RunnerDto, Runner>(runnerDto);
-       return Ok(response);
-    }
-
-    [HttpPost("createAccount")]
     public async Task<IActionResult> CreateAccount(AccountCreateRequest request)
     {
         var response = await _runner.CreateAccount(request);
