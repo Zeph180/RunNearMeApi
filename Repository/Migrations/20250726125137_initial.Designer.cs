@@ -12,8 +12,8 @@ using Repository.Persistence;
 namespace Repository.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250725210918_Groups")]
-    partial class Groups
+    [Migration("20250726125137_initial")]
+    partial class initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,21 +24,6 @@ namespace Repository.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("ChallengeRunner", b =>
-                {
-                    b.Property<Guid>("ChallengesChallengeId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("RunnersRunnerId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("ChallengesChallengeId", "RunnersRunnerId");
-
-                    b.HasIndex("RunnersRunnerId");
-
-                    b.ToTable("ChallengeRunner");
-                });
 
             modelBuilder.Entity("Domain.Entities.Challenge", b =>
                 {
@@ -64,7 +49,7 @@ namespace Repository.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid>("RunnerId")
+                    b.Property<Guid>("ProfileId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Target")
@@ -73,7 +58,9 @@ namespace Repository.Migrations
 
                     b.HasKey("ChallengeId");
 
-                    b.ToTable("Challenge");
+                    b.HasIndex("ProfileId");
+
+                    b.ToTable("Challenges");
                 });
 
             modelBuilder.Entity("Domain.Entities.Comment", b =>
@@ -113,15 +100,24 @@ namespace Repository.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<bool>("Accepted")
+                        .HasColumnType("bit");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid?>("ProfileId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("RunnerId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("FriendId");
 
-                    b.HasIndex("RunnerId");
+                    b.HasIndex("ProfileId");
 
                     b.ToTable("Friends");
                 });
@@ -149,12 +145,14 @@ namespace Repository.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid>("RunnerId")
+                    b.Property<Guid>("ProfileId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("GroupId");
 
-                    b.ToTable("Group");
+                    b.HasIndex("ProfileId");
+
+                    b.ToTable("Groups");
                 });
 
             modelBuilder.Entity("Domain.Entities.Like", b =>
@@ -206,12 +204,15 @@ namespace Repository.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("ProfileId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid>("RunnerId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("NotificationId");
 
-                    b.HasIndex("RunnerId");
+                    b.HasIndex("ProfileId");
 
                     b.ToTable("Notifications");
                 });
@@ -240,6 +241,9 @@ namespace Repository.Migrations
                     b.Property<string>("Message")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("ProfileId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid>("RunnerId")
                         .HasColumnType("uniqueidentifier");
 
@@ -248,9 +252,55 @@ namespace Repository.Migrations
 
                     b.HasKey("PostId");
 
-                    b.HasIndex("RunnerId");
+                    b.HasIndex("ProfileId");
 
                     b.ToTable("Posts");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Profile", b =>
+                {
+                    b.Property<Guid>("ProfileId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Age")
+                        .HasColumnType("int");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Height")
+                        .HasColumnType("int");
+
+                    b.Property<string>("NickName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PhoneNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("RunnerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Weight")
+                        .HasColumnType("int");
+
+                    b.HasKey("ProfileId");
+
+                    b.HasIndex("RunnerId")
+                        .IsUnique();
+
+                    b.ToTable("Profiles");
                 });
 
             modelBuilder.Entity("Domain.Entities.Run", b =>
@@ -283,6 +333,9 @@ namespace Repository.Migrations
                     b.Property<double>("MaxPace")
                         .HasColumnType("float");
 
+                    b.Property<Guid?>("ProfileId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid>("RunnerId")
                         .HasColumnType("uniqueidentifier");
 
@@ -291,7 +344,7 @@ namespace Repository.Migrations
 
                     b.HasKey("RunId");
 
-                    b.HasIndex("RunnerId");
+                    b.HasIndex("ProfileId");
 
                     b.ToTable("Runs");
                 });
@@ -302,29 +355,17 @@ namespace Repository.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Address")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Age")
-                        .HasColumnType("int");
-
-                    b.Property<string>("City")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<Guid?>("ChallengeId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("Height")
-                        .HasColumnType("int");
+                    b.Property<Guid?>("GroupId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("NickName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -332,48 +373,20 @@ namespace Repository.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("PhoneNumber")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("State")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Weight")
-                        .HasColumnType("int");
-
                     b.HasKey("RunnerId");
+
+                    b.HasIndex("ChallengeId");
+
+                    b.HasIndex("GroupId");
 
                     b.ToTable("Runners");
                 });
 
-            modelBuilder.Entity("GroupRunner", b =>
+            modelBuilder.Entity("Domain.Entities.Challenge", b =>
                 {
-                    b.Property<Guid>("GroupsGroupId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("RunnersRunnerId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("GroupsGroupId", "RunnersRunnerId");
-
-                    b.HasIndex("RunnersRunnerId");
-
-                    b.ToTable("GroupRunner");
-                });
-
-            modelBuilder.Entity("ChallengeRunner", b =>
-                {
-                    b.HasOne("Domain.Entities.Challenge", null)
-                        .WithMany()
-                        .HasForeignKey("ChallengesChallengeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Entities.Runner", null)
-                        .WithMany()
-                        .HasForeignKey("RunnersRunnerId")
+                    b.HasOne("Domain.Entities.Profile", null)
+                        .WithMany("Challenges")
+                        .HasForeignKey("ProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -387,9 +400,16 @@ namespace Repository.Migrations
 
             modelBuilder.Entity("Domain.Entities.Friend", b =>
                 {
-                    b.HasOne("Domain.Entities.Runner", null)
+                    b.HasOne("Domain.Entities.Profile", null)
                         .WithMany("Friends")
-                        .HasForeignKey("RunnerId")
+                        .HasForeignKey("ProfileId");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Group", b =>
+                {
+                    b.HasOne("Domain.Entities.Profile", null)
+                        .WithMany("Groups")
+                        .HasForeignKey("ProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -407,49 +427,58 @@ namespace Repository.Migrations
 
             modelBuilder.Entity("Domain.Entities.Notification", b =>
                 {
-                    b.HasOne("Domain.Entities.Runner", null)
+                    b.HasOne("Domain.Entities.Profile", null)
                         .WithMany("Notifications")
-                        .HasForeignKey("RunnerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("ProfileId");
                 });
 
             modelBuilder.Entity("Domain.Entities.Post", b =>
                 {
-                    b.HasOne("Domain.Entities.Runner", null)
+                    b.HasOne("Domain.Entities.Profile", null)
                         .WithMany("Posts")
-                        .HasForeignKey("RunnerId")
+                        .HasForeignKey("ProfileId");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Profile", b =>
+                {
+                    b.HasOne("Domain.Entities.Runner", null)
+                        .WithOne("Profile")
+                        .HasForeignKey("Domain.Entities.Profile", "RunnerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
             modelBuilder.Entity("Domain.Entities.Run", b =>
                 {
-                    b.HasOne("Domain.Entities.Runner", null)
+                    b.HasOne("Domain.Entities.Profile", null)
                         .WithMany("Runs")
-                        .HasForeignKey("RunnerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("ProfileId");
                 });
 
-            modelBuilder.Entity("GroupRunner", b =>
+            modelBuilder.Entity("Domain.Entities.Runner", b =>
                 {
-                    b.HasOne("Domain.Entities.Group", null)
-                        .WithMany()
-                        .HasForeignKey("GroupsGroupId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.HasOne("Domain.Entities.Challenge", null)
+                        .WithMany("Runners")
+                        .HasForeignKey("ChallengeId");
 
-                    b.HasOne("Domain.Entities.Runner", null)
-                        .WithMany()
-                        .HasForeignKey("RunnersRunnerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.HasOne("Domain.Entities.Group", null)
+                        .WithMany("Runners")
+                        .HasForeignKey("GroupId");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Challenge", b =>
+                {
+                    b.Navigation("Runners");
                 });
 
             modelBuilder.Entity("Domain.Entities.Comment", b =>
                 {
                     b.Navigation("Likes");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Group", b =>
+                {
+                    b.Navigation("Runners");
                 });
 
             modelBuilder.Entity("Domain.Entities.Post", b =>
@@ -459,15 +488,24 @@ namespace Repository.Migrations
                     b.Navigation("Likes");
                 });
 
-            modelBuilder.Entity("Domain.Entities.Runner", b =>
+            modelBuilder.Entity("Domain.Entities.Profile", b =>
                 {
+                    b.Navigation("Challenges");
+
                     b.Navigation("Friends");
+
+                    b.Navigation("Groups");
 
                     b.Navigation("Notifications");
 
                     b.Navigation("Posts");
 
                     b.Navigation("Runs");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Runner", b =>
+                {
+                    b.Navigation("Profile");
                 });
 #pragma warning restore 612, 618
         }
