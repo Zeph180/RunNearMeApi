@@ -18,6 +18,7 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
+        builder.Logging.AddSeq();
         // Add services to the container.
         builder.Services.AddAuthorization();
         
@@ -40,7 +41,7 @@ public class Program
         builder.Services.AddFluentValidationClientsideAdapters();
         builder.Services.AddValidatorsFromAssemblyContaining<RunnerValidation>();
 
-// Disable default model validation to use only FluentValidation
+        //Disable default model validation to use only FluentValidation
         builder.Services.Configure<ApiBehaviorOptions>(options =>
         {
             options.SuppressModelStateInvalidFilter = true;

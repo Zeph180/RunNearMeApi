@@ -19,6 +19,7 @@
       </PackageReference>
       <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.7" />
       <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.7" />
+      <PackageReference Include="Seq.Extensions.Logging" Version="8.0.0" />
     </ItemGroup>
 
 </Project>

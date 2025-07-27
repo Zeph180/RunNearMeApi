@@ -25,10 +25,10 @@ public class ValidationFilter : IActionFilter
                 statusCode = 400,
                 traceId = context.HttpContext.TraceIdentifier,
                 timeStamp = DateTime.UtcNow,
-                details = errors // 👈✅ this now shows error messages
+                details = errors
             });
         }
     }
-
+        
     public void OnActionExecuted(ActionExecutedContext context) { }
 }
