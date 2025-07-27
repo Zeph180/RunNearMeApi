@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using Application.Interfaces;
 using Application.Middlewares.ErrorHandling;
+using Application.Models.Request.Authentication;
 using AutoMapper;
 using Domain.Entities;
 using Domain.Models.Request.Account;
@@ -24,17 +25,37 @@ public class AuthenticationRepository : IAuthentication
     private readonly IConfiguration _configuration;
     private readonly IEmailService _emailService;
     
-    public async Task<LoginResponse> CompleteProfile(IdentityUser user)
-    {
-        throw new NotImplementedException();
-    }
-    
     public AuthenticationRepository(AppDbContext dbContext, IMapper mapper, IConfiguration configuration, IEmailService emailService)
     {
         _dbContext = dbContext;
         _mapper = mapper;
         _configuration = configuration;
         _emailService = emailService;
+    }
+    
+    public async Task<LoginResponse> CompleteProfile(CompleteProfileReq profileReq)
+    {
+        var user = await _dbContext.Runners
+            .AsNoTracking()
+            .FirstOrDefaultAsync(r => r.RunnerId == profileReq.RunnerId);
+        
+        if (user == null)
+        {
+            throw new BusinessException(
+                "User not found",
+                "USER_NOT_FOUND",
+                404
+            );
+        }
+        
+        var profile = _mapper.Map<CompleteProfileReq, Profile>(profileReq);
+        var resp = await _dbContext.AddAsync(profile);
+        await _dbContext.SaveChangesAsync();
+        return new LoginResponse
+        {
+            Account = _mapper.Map<Runner, CreateAccountResponse>(user),
+            Profile = profile
+        };
     }
     
     public async Task<CreateAccountResponse> CreateAccount(AccountCreateRequest request)
@@ -73,7 +94,7 @@ public class AuthenticationRepository : IAuthentication
         return new LoginResponse
         {
             Token = token,
-            Account = profile == null ? _mapper.Map<Runner, CreateAccountResponse>(user) : null,
+            Account = profile != null ? _mapper.Map<Runner, CreateAccountResponse>(user) : null,
             Profile = profile
         };
     }
