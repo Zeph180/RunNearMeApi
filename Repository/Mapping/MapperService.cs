@@ -1,4 +1,5 @@
 ﻿using Application.Interfaces.Dtos;
+using Application.Models.Request.Authentication;
 using AutoMapper;
 using Domain.Entities;
 using Domain.Models.Request.Account;
@@ -26,5 +27,12 @@ public class MapperService : Profile
             .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
             .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
             .ForMember(dest => dest.Password, opt => opt.MapFrom(src => src.Password));
+
+        CreateMap<CompleteProfileReq, Domain.Entities.Profile>()
+            .ForMember(dest => dest.RunnerId, opt => opt.MapFrom(src => src.RunnerId))
+            .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.PhoneNumber))
+            .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.Address))
+            .ForMember(dest => dest.Age, opt => opt.MapFrom(src => src.Age));
+
     }
 }
