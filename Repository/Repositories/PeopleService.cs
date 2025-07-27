@@ -1,10 +1,12 @@
 ﻿using Application.Interfaces;
 using Application.Middlewares.ErrorHandling;
+using Application.Models.Request.People;
 using Application.Models.Response.People;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Repository.Persistence;
+using Profile = Domain.Entities.Profile;
 
 namespace Repository.Repositories;
 
@@ -22,6 +24,8 @@ public class PeopleService : IPeople
         _configuration = configuration;
         _emailService = emailService;
     }
+    
+    
 
     public async Task<List<Person>> GetPeople(Guid runnerId)
     {
@@ -41,5 +45,32 @@ public class PeopleService : IPeople
                 NickName = p.NickName
             }).ToListAsync();
         return people;
+    }
+
+    public async Task<GetPersonResponse> GetPerson(GetPersonRequest request)
+    {
+        var requester = await _dbContext.Profiles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.RunnerId == request.RunnerId);
+        if (requester == null)
+        {
+            throw new BusinessException(
+                "User not allowed to access this resource.",
+                "USER_NOT_ALLOWED",
+                401);
+        }
+        
+        var person = await _dbContext.Profiles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.RunnerId == request.PersonId) ;
+        if (person == null)
+        {
+            throw new BusinessException(
+                "Person not found",
+                "PERSON_NOT_FOUND",
+                 404);
+        }
+
+        return _mapper.Map<Profile, GetPersonResponse>(person);
     }
 }

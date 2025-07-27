@@ -1,5 +1,6 @@
 ﻿using Application.Interfaces.Dtos;
 using Application.Models.Request.Authentication;
+using Application.Models.Response.People;
 using AutoMapper;
 using Domain.Entities;
 using Domain.Models.Request.Account;
@@ -34,5 +35,12 @@ public class MapperService : Profile
             .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.Address))
             .ForMember(dest => dest.Age, opt => opt.MapFrom(src => src.Age));
 
+        CreateMap<Domain.Entities.Profile, GetPersonResponse>()
+            .ForMember(dest => dest.RunnerId, opt => opt.MapFrom(src => src.RunnerId))
+            .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.PhoneNumber))
+            .ForMember(dest => dest.NickName, opt => opt.MapFrom(src => src.NickName))
+            .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.Address))
+            .ForMember(dest => dest.City, opt => opt.MapFrom(src => src.City))
+            .ForMember(dest => dest.State, opt => opt.MapFrom(src => src.State));
     }
 }
