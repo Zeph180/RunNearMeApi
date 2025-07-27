@@ -67,6 +67,7 @@ public class Program
         builder.Services.AddScoped<IRunner, RunnerRepository>();
         builder.Services.AddScoped<IAuthentication, AuthenticationRepository>();
         builder.Services.AddScoped<IEmailService, EmailService>();
+        builder.Services.AddScoped<IPeople, PeopleService>();
         
         builder.Services.AddFluentValidationAutoValidation();
         builder.Services.AddFluentValidationClientsideAdapters();

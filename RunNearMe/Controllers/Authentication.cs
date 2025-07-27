@@ -3,12 +3,14 @@ using Application.Models.Request.Authentication;
 using Application.Wrappers;
 using Domain.Models.Request.Account;
 using Domain.Models.Request.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace RunNearMe.Controllers;
 
 [Route("api/authentication/[controller]")]
 [ApiController]
+[Authorize]
 public class Authentication : ControllerBase
 {
     private readonly IAuthentication _authentication;
@@ -24,6 +26,7 @@ public class Authentication : ControllerBase
     /// <param name="request"></param>
     /// <returns></returns>
     [HttpPost("register")]
+    [AllowAnonymous]
     public async Task<IActionResult> Register([FromBody] AccountCreateRequest request)
     {
         var response = await _authentication.CreateAccount(request);
@@ -36,6 +39,7 @@ public class Authentication : ControllerBase
     /// <param name="request"></param>
     /// <returns></returns>
     [HttpPost("login")]
+    [AllowAnonymous]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         var response = await _authentication.Login(request);
