@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Repository.Migrations
 {
     /// <inheritdoc />
-    public partial class initial : Migration
+    public partial class removeidentity : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -16,7 +16,7 @@ namespace Repository.Migrations
                 columns: table => new
                 {
                     ChallengeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ProfileId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    RunnerId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Target = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
@@ -30,44 +30,11 @@ namespace Repository.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Comments",
-                columns: table => new
-                {
-                    CommentId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    RunnerId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Message = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
-                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    PostId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Comments", x => x.CommentId);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Friends",
-                columns: table => new
-                {
-                    FriendId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    RunnerId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Accepted = table.Column<bool>(type: "bit", nullable: false),
-                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
-                    ProfileId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Friends", x => x.FriendId);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Groups",
                 columns: table => new
                 {
                     GroupId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    ProfileId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    RunnerId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
@@ -86,30 +53,17 @@ namespace Repository.Migrations
                     RunnerId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Password = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ChallengeId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    GroupId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                    Email = table.Column<string>(type: "nvarchar(450)", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Runners", x => x.RunnerId);
-                    table.ForeignKey(
-                        name: "FK_Runners_Challenges_ChallengeId",
-                        column: x => x.ChallengeId,
-                        principalTable: "Challenges",
-                        principalColumn: "ChallengeId");
-                    table.ForeignKey(
-                        name: "FK_Runners_Groups_GroupId",
-                        column: x => x.GroupId,
-                        principalTable: "Groups",
-                        principalColumn: "GroupId");
                 });
 
             migrationBuilder.CreateTable(
                 name: "Profiles",
                 columns: table => new
                 {
-                    ProfileId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     RunnerId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     NickName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
@@ -122,11 +76,80 @@ namespace Repository.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Profiles", x => x.ProfileId);
+                    table.PrimaryKey("PK_Profiles", x => x.RunnerId);
                     table.ForeignKey(
                         name: "FK_Profiles_Runners_RunnerId",
                         column: x => x.RunnerId,
                         principalTable: "Runners",
+                        principalColumn: "RunnerId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ChallengeProfile",
+                columns: table => new
+                {
+                    ChallengesChallengeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ProfilesRunnerId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChallengeProfile", x => new { x.ChallengesChallengeId, x.ProfilesRunnerId });
+                    table.ForeignKey(
+                        name: "FK_ChallengeProfile_Challenges_ChallengesChallengeId",
+                        column: x => x.ChallengesChallengeId,
+                        principalTable: "Challenges",
+                        principalColumn: "ChallengeId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ChallengeProfile_Profiles_ProfilesRunnerId",
+                        column: x => x.ProfilesRunnerId,
+                        principalTable: "Profiles",
+                        principalColumn: "RunnerId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Friends",
+                columns: table => new
+                {
+                    FriendId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    RunnerId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Accepted = table.Column<bool>(type: "bit", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    ProfileRunnerId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Friends", x => x.FriendId);
+                    table.ForeignKey(
+                        name: "FK_Friends_Profiles_ProfileRunnerId",
+                        column: x => x.ProfileRunnerId,
+                        principalTable: "Profiles",
+                        principalColumn: "RunnerId");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "GroupProfile",
+                columns: table => new
+                {
+                    GroupsGroupId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ProfilesRunnerId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_GroupProfile", x => new { x.GroupsGroupId, x.ProfilesRunnerId });
+                    table.ForeignKey(
+                        name: "FK_GroupProfile_Groups_GroupsGroupId",
+                        column: x => x.GroupsGroupId,
+                        principalTable: "Groups",
+                        principalColumn: "GroupId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_GroupProfile_Profiles_ProfilesRunnerId",
+                        column: x => x.ProfilesRunnerId,
+                        principalTable: "Profiles",
                         principalColumn: "RunnerId",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -141,17 +164,17 @@ namespace Repository.Migrations
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     IsRead = table.Column<bool>(type: "bit", nullable: false),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false),
-                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    ProfileId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Notifications", x => x.NotificationId);
                     table.ForeignKey(
-                        name: "FK_Notifications_Profiles_ProfileId",
-                        column: x => x.ProfileId,
+                        name: "FK_Notifications_Profiles_RunnerId",
+                        column: x => x.RunnerId,
                         principalTable: "Profiles",
-                        principalColumn: "ProfileId");
+                        principalColumn: "RunnerId",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -167,16 +190,16 @@ namespace Repository.Migrations
                     ImageUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     VideoUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Location = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ProfileId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                    ProfileRunnerId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Posts", x => x.PostId);
                     table.ForeignKey(
-                        name: "FK_Posts_Profiles_ProfileId",
-                        column: x => x.ProfileId,
+                        name: "FK_Posts_Profiles_ProfileRunnerId",
+                        column: x => x.ProfileRunnerId,
                         principalTable: "Profiles",
-                        principalColumn: "ProfileId");
+                        principalColumn: "RunnerId");
                 });
 
             migrationBuilder.CreateTable(
@@ -194,16 +217,38 @@ namespace Repository.Migrations
                     CaloriesBurned = table.Column<double>(type: "float", nullable: false),
                     AverageHeartRate = table.Column<double>(type: "float", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ProfileId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                    ProfileRunnerId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Runs", x => x.RunId);
                     table.ForeignKey(
-                        name: "FK_Runs_Profiles_ProfileId",
-                        column: x => x.ProfileId,
+                        name: "FK_Runs_Profiles_ProfileRunnerId",
+                        column: x => x.ProfileRunnerId,
                         principalTable: "Profiles",
-                        principalColumn: "ProfileId");
+                        principalColumn: "RunnerId");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Comments",
+                columns: table => new
+                {
+                    CommentId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    RunnerId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Message = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    PostId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Comments", x => x.CommentId);
+                    table.ForeignKey(
+                        name: "FK_Comments_Posts_PostId",
+                        column: x => x.PostId,
+                        principalTable: "Posts",
+                        principalColumn: "PostId");
                 });
 
             migrationBuilder.CreateTable(
@@ -232,9 +277,9 @@ namespace Repository.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Challenges_ProfileId",
-                table: "Challenges",
-                column: "ProfileId");
+                name: "IX_ChallengeProfile_ProfilesRunnerId",
+                table: "ChallengeProfile",
+                column: "ProfilesRunnerId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Comments_PostId",
@@ -242,14 +287,14 @@ namespace Repository.Migrations
                 column: "PostId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Friends_ProfileId",
+                name: "IX_Friends_ProfileRunnerId",
                 table: "Friends",
-                column: "ProfileId");
+                column: "ProfileRunnerId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Groups_ProfileId",
-                table: "Groups",
-                column: "ProfileId");
+                name: "IX_GroupProfile_ProfilesRunnerId",
+                table: "GroupProfile",
+                column: "ProfilesRunnerId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Likes_CommentId",
@@ -262,80 +307,38 @@ namespace Repository.Migrations
                 column: "PostId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Notifications_ProfileId",
+                name: "IX_Notifications_RunnerId",
                 table: "Notifications",
-                column: "ProfileId");
+                column: "RunnerId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Posts_ProfileId",
+                name: "IX_Posts_ProfileRunnerId",
                 table: "Posts",
-                column: "ProfileId");
+                column: "ProfileRunnerId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Profiles_RunnerId",
-                table: "Profiles",
-                column: "RunnerId",
+                name: "IX_Runners_Email",
+                table: "Runners",
+                column: "Email",
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Runners_ChallengeId",
-                table: "Runners",
-                column: "ChallengeId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Runners_GroupId",
-                table: "Runners",
-                column: "GroupId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Runs_ProfileId",
+                name: "IX_Runs_ProfileRunnerId",
                 table: "Runs",
-                column: "ProfileId");
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Challenges_Profiles_ProfileId",
-                table: "Challenges",
-                column: "ProfileId",
-                principalTable: "Profiles",
-                principalColumn: "ProfileId",
-                onDelete: ReferentialAction.Cascade);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Comments_Posts_PostId",
-                table: "Comments",
-                column: "PostId",
-                principalTable: "Posts",
-                principalColumn: "PostId");
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Friends_Profiles_ProfileId",
-                table: "Friends",
-                column: "ProfileId",
-                principalTable: "Profiles",
-                principalColumn: "ProfileId");
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Groups_Profiles_ProfileId",
-                table: "Groups",
-                column: "ProfileId",
-                principalTable: "Profiles",
-                principalColumn: "ProfileId",
-                onDelete: ReferentialAction.Cascade);
+                column: "ProfileRunnerId");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_Challenges_Profiles_ProfileId",
-                table: "Challenges");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_Groups_Profiles_ProfileId",
-                table: "Groups");
+            migrationBuilder.DropTable(
+                name: "ChallengeProfile");
 
             migrationBuilder.DropTable(
                 name: "Friends");
+
+            migrationBuilder.DropTable(
+                name: "GroupProfile");
 
             migrationBuilder.DropTable(
                 name: "Likes");
@@ -345,6 +348,12 @@ namespace Repository.Migrations
 
             migrationBuilder.DropTable(
                 name: "Runs");
+
+            migrationBuilder.DropTable(
+                name: "Challenges");
+
+            migrationBuilder.DropTable(
+                name: "Groups");
 
             migrationBuilder.DropTable(
                 name: "Comments");
@@ -357,12 +366,6 @@ namespace Repository.Migrations
 
             migrationBuilder.DropTable(
                 name: "Runners");
-
-            migrationBuilder.DropTable(
-                name: "Challenges");
-
-            migrationBuilder.DropTable(
-                name: "Groups");
         }
     }
 }
