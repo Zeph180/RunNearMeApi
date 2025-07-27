@@ -10,4 +10,8 @@ public class Runner
     [EmailAddress]
     public required string Email { get; set; }
     public Profile? Profile { get; set; }
+    public bool EmailConfirmed { get; set; }
+    public string? EmailConfirmationToken { get; set; }
+    public DateTime TokenGeneratedAt { get; set; }
+    public DateTime TokenConfirmedAt { get; set; }
 }
