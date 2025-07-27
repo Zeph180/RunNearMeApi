@@ -1,6 +1,0 @@
-﻿namespace Domain.Models.Request.Authentication;
-
-public class LoginRequest
-{
-    
-}
