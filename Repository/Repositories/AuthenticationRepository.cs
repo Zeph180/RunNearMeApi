@@ -21,12 +21,14 @@ public class AuthenticationRepository : IAuthentication
     private readonly AppDbContext _dbContext;
     private readonly IMapper _mapper;
     private readonly IConfiguration _configuration;
+    private readonly IEmailService _emailService;
     
-    public AuthenticationRepository(AppDbContext dbContext, IMapper mapper, IConfiguration configuration)
+    public AuthenticationRepository(AppDbContext dbContext, IMapper mapper, IConfiguration configuration, IEmailService emailService)
     {
         _dbContext = dbContext;
         _mapper = mapper;
         _configuration = configuration;
+        _emailService = emailService;
     }
     
     public async Task<CreateAccountResponse> CreateAccount(AccountCreateRequest request)
@@ -42,6 +44,7 @@ public class AuthenticationRepository : IAuthentication
         var runner = _mapper.Map<AccountCreateRequest, Runner>(request);
         var resp = await _dbContext.AddAsync(runner);
         await _dbContext.SaveChangesAsync();
+        await GenerateEmailConfirmationToken(runner.Email);
         return _mapper.Map<Runner, CreateAccountResponse>(runner);
     }
 
@@ -94,5 +97,48 @@ public class AuthenticationRepository : IAuthentication
             signingCredentials: credentials);
         
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    public async Task ConfirmEmail(string email)
+    {
+        var runner = await _dbContext.Runners.FirstOrDefaultAsync(r => r.Email == email);
+        
+        if (runner == null)
+        {
+            throw new BusinessException(
+                "Email not found",
+                "EMAIL_NOT_FOUND",
+                404
+            );
+        }
+        
+        runner.EmailConfirmed = false;
+        runner.TokenConfirmedAt = DateTime.Now;
+        _dbContext.Runners.Update(runner);
+        await _dbContext.SaveChangesAsync();
+    }
+
+    private async Task GenerateEmailConfirmationToken(string email)
+    {
+        var runner = await _dbContext.Runners.FirstOrDefaultAsync(r => r.Email == email);
+        
+        if (runner == null)
+        {
+            throw new BusinessException(
+                "Email not found",
+                "EMAIL_NOT_FOUND",
+                404
+            );
+        }
+        
+        string emailToken = Guid.NewGuid().ToString().Replace("-","");
+        
+        runner.EmailConfirmationToken = emailToken;
+        runner.EmailConfirmed = false;
+        runner.TokenGeneratedAt = DateTime.Now;
+        _dbContext.Runners.Update(runner);
+        await _dbContext.SaveChangesAsync();
+        
+        //await _emailService.SendAsync(email, "Confirm your email", $"Please confirm your email by clicking this link: {emailToken}");
     }
 }
