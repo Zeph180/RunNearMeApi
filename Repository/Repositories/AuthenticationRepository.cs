@@ -8,6 +8,7 @@ using Domain.Entities;
 using Domain.Models.Request.Account;
 using Domain.Models.Request.Authentication;
 using Domain.Models.Response;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -22,6 +23,11 @@ public class AuthenticationRepository : IAuthentication
     private readonly IMapper _mapper;
     private readonly IConfiguration _configuration;
     private readonly IEmailService _emailService;
+    
+    public async Task<LoginResponse> CompleteProfile(IdentityUser user)
+    {
+        throw new NotImplementedException();
+    }
     
     public AuthenticationRepository(AppDbContext dbContext, IMapper mapper, IConfiguration configuration, IEmailService emailService)
     {
@@ -141,4 +147,6 @@ public class AuthenticationRepository : IAuthentication
         
         //await _emailService.SendAsync(email, "Confirm your email", $"Please confirm your email by clicking this link: {emailToken}");
     }
+    
+    
 }
