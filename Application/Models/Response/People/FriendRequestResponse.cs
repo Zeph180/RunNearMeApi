@@ -1,0 +1,7 @@
+﻿namespace Application.Models.Response.People;
+
+public class FriendRequestResponse
+{
+    public Guid RequestId { get; set; }
+    public string RequestStatus { get; set; } = "Pending";
+}

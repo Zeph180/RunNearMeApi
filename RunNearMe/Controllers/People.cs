@@ -41,5 +41,11 @@ public class People : ControllerBase
       var person = await _people.GetPerson(request);
       return Ok(ApiResponse<object>.SuccessResponse(person));
    }
-   
+
+   [HttpPost("request-friendship")]
+   public async Task<IActionResult> SendFriendRequest([FromBody] GetPersonRequest request)
+   {
+      var response = await _people.SendFriendRequest(request);
+      return Ok(ApiResponse<object>.SuccessResponse(response));
+   }
 }

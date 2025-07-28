@@ -3,6 +3,7 @@ using Application.Middlewares.ErrorHandling;
 using Application.Models.Request.People;
 using Application.Models.Response.People;
 using AutoMapper;
+using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Repository.Persistence;
@@ -72,5 +73,48 @@ public class PeopleService : IPeople
         }
 
         return _mapper.Map<Profile, GetPersonResponse>(person);
+    }
+
+    public async Task<FriendRequestResponse> SendFriendRequest(GetPersonRequest request)
+    {
+        var requester = await _dbContext.Profiles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.RunnerId == request.RunnerId);
+        if (requester == null)
+        {
+            throw new BusinessException(
+                "You are not allowed to access this resource.",
+                "USER_NOT_ALLOWED",
+                401);
+        }
+        
+        var person = await _dbContext.Profiles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.RunnerId == request.PersonId) ;
+
+        if (person == null)
+        {
+            throw new BusinessException(
+                "Person not found",
+                "PERSON_NOT_FOUND",
+                404);
+        }
+
+        var existingRequest = _dbContext.Friends
+            .AsNoTracking()
+            .Where(r => r.RequestFrom == request.RunnerId && r.RequestTo == request.RunnerId);
+        if (existingRequest != null){
+            throw new BusinessException(
+                "Friend request already exists",
+                "DUPLICATE_REQUEST",
+                409);
+        }
+
+        var friendRequest = _mapper.Map<Profile, Friend>(person);
+        friendRequest.RequestFrom = request.RunnerId;
+        friendRequest.Status = "P";
+        var response = await _dbContext.AddAsync(friendRequest);
+        await _dbContext.SaveChangesAsync();
+        return _mapper.Map<Friend, FriendRequestResponse>(friendRequest);
     }
 }

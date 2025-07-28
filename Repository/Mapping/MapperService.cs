@@ -42,5 +42,17 @@ public class MapperService : Profile
             .ForMember(dest => dest.Address, opt => opt.MapFrom(src => src.Address))
             .ForMember(dest => dest.City, opt => opt.MapFrom(src => src.City))
             .ForMember(dest => dest.State, opt => opt.MapFrom(src => src.State));
+
+        CreateMap<Domain.Entities.Profile, Friend>()
+            .ForMember(dest => dest.FriendId, opt => opt.Ignore())
+            .ForMember(dest => dest.RequestTo, opt => opt.MapFrom(src => src.RunnerId))
+            .ForMember(dest => dest.Status, opt => opt.Ignore())
+            .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+            .ForMember(dest => dest.IsDeleted, opt => opt.Ignore())
+            .ForMember(dest => dest.Profiles, opt => opt.Ignore());
+
+        CreateMap<Friend, FriendRequestResponse>()
+            .ForMember(dest => dest.RequestId, opt => opt.Ignore())
+            .ForMember(dest => dest.RequestStatus, opt => opt.MapFrom(src => src.Status));
     }
 }
