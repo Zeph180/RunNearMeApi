@@ -13,4 +13,5 @@ public class Run
     public double CaloriesBurned { get; set; }
     public double AverageHeartRate { get; set; }
     public DateTime CreatedAt { get; set; }
+    public Profile? Profile { get; set; }
 }

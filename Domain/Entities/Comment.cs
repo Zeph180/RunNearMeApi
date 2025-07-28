@@ -12,4 +12,7 @@ public class Comment
     public bool IsDeleted { get; set; }
     public DateTime? DeletedAt { get; set; }
     public Like[]? Likes { get; set; }
+    
+    public Guid PostId { get; set; }
+    public Post? Post { get; set; }
 }

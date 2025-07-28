@@ -23,6 +23,7 @@ public class Profile
     public int Height { get; set; }
     [Range(10, 200)]
     public int Weight { get; set; }
+    public virtual Runner? Runner { get; set; }
     public ICollection<Run>? Runs { get; set; }
     public ICollection<Notification>? Notifications { get; set; }
     public ICollection<Friend>? Friends { get; set; }

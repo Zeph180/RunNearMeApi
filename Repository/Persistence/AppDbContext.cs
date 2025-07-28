@@ -11,11 +11,27 @@ public class AppDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        base.OnModelCreating(modelBuilder); 
-        
+        base.OnModelCreating(modelBuilder);
+
         modelBuilder.Entity<Runner>()
             .HasIndex(r => r.Email)
             .IsUnique();
+
+        modelBuilder.Entity<Profile>()
+            .HasMany(x => x.Notifications)
+            .WithOne(x => x.Profile)
+            .IsRequired();
+            
+        modelBuilder.Entity<Profile>()
+            .HasMany(x => x.Runs)
+            .WithOne(x => x.Profile)
+            .HasForeignKey(x => x.RunnerId)
+            .IsRequired();
+
+        modelBuilder.Entity<Profile>()
+            .HasMany(x => x.Friends)
+            .WithMany(x => x.Profiles);
+        
     }
 
     public DbSet<Runner> Runners { get; set; }

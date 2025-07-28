@@ -7,4 +7,5 @@ public class Friend
     public DateTime CreatedAt { get; set; }
     public bool Accepted { get; set; } = false;
     public bool IsDeleted { get; set; } = false;
+    public ICollection<Profile>? Profiles { get; set; }
 }
