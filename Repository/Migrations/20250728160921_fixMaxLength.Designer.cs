@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Repository.Persistence;
 
@@ -11,9 +12,11 @@ using Repository.Persistence;
 namespace Repository.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250728160921_fixMaxLength")]
+    partial class fixMaxLength
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -96,7 +99,7 @@ namespace Repository.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<Guid>("PostId")
+                    b.Property<Guid?>("PostId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("RunnerId")
@@ -115,24 +118,24 @@ namespace Repository.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<bool>("Accepted")
+                        .HasColumnType("bit");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<Guid>("RequestFrom")
+                    b.Property<Guid?>("ProfileRunnerId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("RequestTo")
+                    b.Property<Guid>("RunnerId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(1)
-                        .HasColumnType("nvarchar(1)");
 
                     b.HasKey("FriendId");
+
+                    b.HasIndex("ProfileRunnerId");
 
                     b.ToTable("Friends");
                 });
@@ -347,6 +350,9 @@ namespace Repository.Migrations
                     b.Property<double>("MaxPace")
                         .HasColumnType("float");
 
+                    b.Property<Guid?>("ProfileRunnerId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid>("RunnerId")
                         .HasColumnType("uniqueidentifier");
 
@@ -355,7 +361,7 @@ namespace Repository.Migrations
 
                     b.HasKey("RunId");
 
-                    b.HasIndex("RunnerId");
+                    b.HasIndex("ProfileRunnerId");
 
                     b.ToTable("Runs");
                 });
@@ -402,21 +408,6 @@ namespace Repository.Migrations
                     b.ToTable("Runners");
                 });
 
-            modelBuilder.Entity("FriendProfile", b =>
-                {
-                    b.Property<Guid>("FriendsFriendId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("ProfilesRunnerId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("FriendsFriendId", "ProfilesRunnerId");
-
-                    b.HasIndex("ProfilesRunnerId");
-
-                    b.ToTable("FriendProfile");
-                });
-
             modelBuilder.Entity("GroupProfile", b =>
                 {
                     b.Property<Guid>("GroupsGroupId")
@@ -449,28 +440,27 @@ namespace Repository.Migrations
 
             modelBuilder.Entity("Domain.Entities.Comment", b =>
                 {
-                    b.HasOne("Domain.Entities.Post", "Post")
+                    b.HasOne("Domain.Entities.Post", null)
                         .WithMany("Comments")
-                        .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("PostId");
+                });
 
-                    b.Navigation("Post");
+            modelBuilder.Entity("Domain.Entities.Friend", b =>
+                {
+                    b.HasOne("Domain.Entities.Profile", null)
+                        .WithMany("Friends")
+                        .HasForeignKey("ProfileRunnerId");
                 });
 
             modelBuilder.Entity("Domain.Entities.Like", b =>
                 {
-                    b.HasOne("Domain.Entities.Comment", "Comment")
+                    b.HasOne("Domain.Entities.Comment", null)
                         .WithMany("Likes")
                         .HasForeignKey("CommentId");
 
-                    b.HasOne("Domain.Entities.Post", "Post")
+                    b.HasOne("Domain.Entities.Post", null)
                         .WithMany("Likes")
                         .HasForeignKey("PostId");
-
-                    b.Navigation("Comment");
-
-                    b.Navigation("Post");
                 });
 
             modelBuilder.Entity("Domain.Entities.Notification", b =>
@@ -493,39 +483,18 @@ namespace Repository.Migrations
 
             modelBuilder.Entity("Domain.Entities.Profile", b =>
                 {
-                    b.HasOne("Domain.Entities.Runner", "Runner")
+                    b.HasOne("Domain.Entities.Runner", null)
                         .WithOne("Profile")
                         .HasForeignKey("Domain.Entities.Profile", "RunnerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Runner");
                 });
 
             modelBuilder.Entity("Domain.Entities.Run", b =>
                 {
-                    b.HasOne("Domain.Entities.Profile", "Profile")
-                        .WithMany("Runs")
-                        .HasForeignKey("RunnerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Profile");
-                });
-
-            modelBuilder.Entity("FriendProfile", b =>
-                {
-                    b.HasOne("Domain.Entities.Friend", null)
-                        .WithMany()
-                        .HasForeignKey("FriendsFriendId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("Domain.Entities.Profile", null)
-                        .WithMany()
-                        .HasForeignKey("ProfilesRunnerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .WithMany("Runs")
+                        .HasForeignKey("ProfileRunnerId");
                 });
 
             modelBuilder.Entity("GroupProfile", b =>
@@ -557,6 +526,8 @@ namespace Repository.Migrations
 
             modelBuilder.Entity("Domain.Entities.Profile", b =>
                 {
+                    b.Navigation("Friends");
+
                     b.Navigation("Notifications");
 
                     b.Navigation("Posts");

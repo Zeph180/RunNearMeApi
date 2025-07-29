@@ -1,10 +1,15 @@
-﻿namespace Domain.Entities;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Domain.Entities;
 
 public class Friend
 {
     public Guid FriendId { get; set; }
-    public Guid RunnerId { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public bool Accepted { get; set; } = false;
+    public Guid RequestFrom { get; set; }
+    public Guid RequestTo { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
+    [MaxLength(1)]
+    public required string Status { get; set; }
     public bool IsDeleted { get; set; } = false;
+    public ICollection<Profile>? Profiles { get; set; }
 }

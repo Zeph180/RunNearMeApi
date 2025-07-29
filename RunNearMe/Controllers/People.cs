@@ -1,4 +1,6 @@
 ﻿using Application.Interfaces;
+using Application.Models.Request.People;
+using Application.Wrappers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -25,6 +27,25 @@ public class People : ControllerBase
    public async Task<IActionResult> GetPeople([FromRoute]Guid runnerId)
    {
       var people = await _people.GetPeople(runnerId);
-      return Ok(people);
+      return Ok(ApiResponse<object>.SuccessResponse(people));
+   }
+
+   /// <summary>
+   /// Returns public details of a single user by their id
+   /// </summary>
+   /// <param name="request"></param>
+   /// <returns></returns>
+   [HttpPost("get-person")]
+   public async Task<IActionResult> GetPerson([FromBody] GetPersonRequest request)
+   {
+      var person = await _people.GetPerson(request);
+      return Ok(ApiResponse<object>.SuccessResponse(person));
+   }
+
+   [HttpPost("request-friendship")]
+   public async Task<IActionResult> SendFriendRequest([FromBody] GetPersonRequest request)
+   {
+      var response = await _people.SendFriendRequest(request);
+      return Ok(ApiResponse<object>.SuccessResponse(response));
    }
 }

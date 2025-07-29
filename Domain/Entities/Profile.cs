@@ -7,10 +7,14 @@ public class Profile
 {
     [Key, ForeignKey("Runner")]
     public Guid RunnerId { get; set; }
+    [MaxLength(10)]
     public required string NickName { get; set; }
+    [MaxLength(13)]
     [Phone]
     public required string PhoneNumber { get; set; }
+    [MaxLength(50)]
     public required string Address { get; set; }
+    [MaxLength(20)]
     public required string City { get; set; }
     public required string State { get; set; }
     [Range(14, 100)]
@@ -19,6 +23,7 @@ public class Profile
     public int Height { get; set; }
     [Range(10, 200)]
     public int Weight { get; set; }
+    public virtual Runner? Runner { get; set; }
     public ICollection<Run>? Runs { get; set; }
     public ICollection<Notification>? Notifications { get; set; }
     public ICollection<Friend>? Friends { get; set; }

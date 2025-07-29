@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Repository.Persistence;
 
@@ -11,9 +12,11 @@ using Repository.Persistence;
 namespace Repository.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250728165140_improveRelationships")]
+    partial class improveRelationships
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -96,7 +99,7 @@ namespace Repository.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<Guid>("PostId")
+                    b.Property<Guid?>("PostId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("RunnerId")
@@ -115,22 +118,17 @@ namespace Repository.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<bool>("Accepted")
+                        .HasColumnType("bit");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<Guid>("RequestFrom")
+                    b.Property<Guid>("RunnerId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("RequestTo")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(1)
-                        .HasColumnType("nvarchar(1)");
 
                     b.HasKey("FriendId");
 
@@ -449,28 +447,20 @@ namespace Repository.Migrations
 
             modelBuilder.Entity("Domain.Entities.Comment", b =>
                 {
-                    b.HasOne("Domain.Entities.Post", "Post")
+                    b.HasOne("Domain.Entities.Post", null)
                         .WithMany("Comments")
-                        .HasForeignKey("PostId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Post");
+                        .HasForeignKey("PostId");
                 });
 
             modelBuilder.Entity("Domain.Entities.Like", b =>
                 {
-                    b.HasOne("Domain.Entities.Comment", "Comment")
+                    b.HasOne("Domain.Entities.Comment", null)
                         .WithMany("Likes")
                         .HasForeignKey("CommentId");
 
-                    b.HasOne("Domain.Entities.Post", "Post")
+                    b.HasOne("Domain.Entities.Post", null)
                         .WithMany("Likes")
                         .HasForeignKey("PostId");
-
-                    b.Navigation("Comment");
-
-                    b.Navigation("Post");
                 });
 
             modelBuilder.Entity("Domain.Entities.Notification", b =>
@@ -493,13 +483,11 @@ namespace Repository.Migrations
 
             modelBuilder.Entity("Domain.Entities.Profile", b =>
                 {
-                    b.HasOne("Domain.Entities.Runner", "Runner")
+                    b.HasOne("Domain.Entities.Runner", null)
                         .WithOne("Profile")
                         .HasForeignKey("Domain.Entities.Profile", "RunnerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Runner");
                 });
 
             modelBuilder.Entity("Domain.Entities.Run", b =>
