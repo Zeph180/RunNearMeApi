@@ -8,4 +8,5 @@ public interface IPeople
     Task<List<Person>> GetPeople(Guid runnerId);
     Task<GetPersonResponse> GetPerson(GetPersonRequest request);
     Task<FriendRequestResponse> SendFriendRequest(GetPersonRequest request);
+    Task<T> GetFriendRequests<T>(Guid runnerId);
 }
