@@ -79,32 +79,15 @@ public class PeopleService : IPeople
 
     public async Task<FriendRequestResponse> SendFriendRequest(GetPersonRequest request)
     {
-        var requester = await _dbContext.Profiles
-            .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.RunnerId == request.RequestedId);
-        if (requester == null)
-        {
-            throw new BusinessException(
-                "You are not allowed to access this resource.",
-                "USER_NOT_ALLOWED",
-                401);
-        }
-        
-        var person = await _dbContext.Profiles
-            .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.RunnerId == request.RequestedId) ;
+        var requester = await GetValidProfileAsync(request.RequesterId, "USER_NOT_ALLOWED", "You are not allowed to access this resource.");
+        var person = await GetValidProfileAsync(request.RequestedId, "PERSON_NOT_FOUND", "Person not found");
 
-        if (person == null)
-        {
-            throw new BusinessException(
-                "Person not found",
-                "PERSON_NOT_FOUND",
-                404);
-        }
-
-        var existingRequest = _dbContext.Friends
+        var existingRequest = await _dbContext.Friends
             .AsNoTracking()
-            .FirstOrDefaultAsync(r => r.RequestFrom == requester.RunnerId && r.RequestTo == person.RunnerId);
+            .FirstOrDefaultAsync(r => 
+                (r.RequestFrom == requester.RunnerId && r.RequestTo == person.RunnerId) ||
+                (r.RequestFrom == person.RunnerId && r.RequestTo == requester.RunnerId)
+                );
         if (existingRequest != null){
             throw new BusinessException(
                 "Friend request already exists",
@@ -115,42 +98,21 @@ public class PeopleService : IPeople
         var friendRequest = _mapper.Map<Profile, Friend>(person);
         friendRequest.RequestFrom = request.RequesterId;
         friendRequest.Status = "P";
-        var response = await _dbContext.AddAsync(friendRequest);
-        var result = await _dbContext.SaveChangesAsync();
+        await _dbContext.AddAsync(friendRequest);
+        await _dbContext.SaveChangesAsync();
 
         //Email sending can be queued
         //_emailService.SendAsync("zephrichards1@gmail.com", "from", "htmlMessage");
-        return _mapper.Map<Friend, FriendRequestResponse>(friendRequest);
+        var response = _mapper.Map<Friend, FriendRequestResponse>(friendRequest);
+        return response;
     }
     
     public async Task<FriendRequestResponse> GetFriendRequest(GetFriendRequestRequest request)
     {
-        var requester = await _dbContext.Profiles
-            .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.RunnerId == request.RequesterId);
-        if (requester == null)
-        {
-            throw new BusinessException(
-                "You are not allowed to access this resource.",
-                "USER_NOT_ALLOWED",
-                401);
-        }
+        var requester = await GetValidProfileAsync(request.RequesterId, "USER_NOT_ALLOWED", "You are not allowed to access this resource.");
+        var person = await GetValidProfileAsync(request.RequestedId, "PERSON_NOT_FOUND", "Person not found");
         
-        var person = await _dbContext.Profiles
-            .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.RunnerId == request.RequestedId);
-
-        if (person == null)
-        {
-            throw new BusinessException(
-                "Person not found",
-                "PERSON_NOT_FOUND",
-                404);
-        }
-        
-        var existingRequest = await _dbContext.Friends
-            .AsNoTracking()
-            .FirstOrDefaultAsync(r => r.RequestFrom == requester.RunnerId && r.RequestTo == person.RunnerId && r.FriendId == request.FriendRequestId);
+        var existingRequest = await GetExistingFriendRequestAsync(requester.RunnerId, person.RunnerId, request.FriendRequestId);
         if (existingRequest == null){
             throw new BusinessException(
                 "Friend request not found",
@@ -160,14 +122,38 @@ public class PeopleService : IPeople
 
         return new FriendRequestResponse
         {
-            RequestId = request.FriendRequestId,
+            FriendRequestId = request.FriendRequestId,
             NickName = person.NickName,
             Address = person.Address,
             RequestStatus = existingRequest.Status,
         };
     }
+    
+    private async Task<Profile> GetValidProfileAsync(Guid runnerId, string errorCode, string errorMessage)
+    {
+        var profile = await _dbContext.Profiles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.RunnerId == runnerId);
 
-    public async Task<FriendRequestResponse> GetFriendRequests(GetFriendRequestRequest request)
+        if (profile == null)
+        {
+            throw new BusinessException(errorMessage, errorCode, 404);
+        }
+
+        return profile;
+    }
+    
+    private async Task<Friend?> GetExistingFriendRequestAsync(Guid requesterId, Guid requestedId, Guid? friendRequestId = null)
+    {
+        return await _dbContext.Friends
+            .AsNoTracking()
+            .FirstOrDefaultAsync(r =>
+                r.RequestFrom == requesterId &&
+                r.RequestTo == requestedId &&
+                (friendRequestId == null || r.FriendId == friendRequestId));
+    }
+
+    public async Task<List<FriendRequestResponse>> GetFriendRequests(GetFriendRequestRequest request)
     {
         throw new NotImplementedException();
     }

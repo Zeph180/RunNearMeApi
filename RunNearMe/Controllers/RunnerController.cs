@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using Application.Interfaces;
 using Application.Interfaces.Dtos;
+using Application.Wrappers;
 using Domain.Entities;
 using Domain.Models.Request.Account;
 using Microsoft.AspNetCore.Mvc;
@@ -27,6 +28,6 @@ public class RunnerController : ControllerBase
     public async Task<IActionResult> CreateAccount(AccountCreateRequest request)
     {
         var response = await _runner.CreateAccount(request);
-        return Ok(response);
+        return Ok(ApiResponse<object>.SuccessResponse(response));
     }
 }
