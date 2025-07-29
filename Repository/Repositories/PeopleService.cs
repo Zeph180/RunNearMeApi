@@ -1,4 +1,5 @@
-﻿using Application.Interfaces;
+﻿using Application.Enums;
+using Application.Interfaces;
 using Application.Middlewares.ErrorHandling;
 using Application.Models.Request.People;
 using Application.Models.Response.People;
@@ -102,7 +103,7 @@ public class PeopleService : IPeople
 
         var existingRequest = _dbContext.Friends
             .AsNoTracking()
-            .Where(r => r.RequestFrom == request.RunnerId && r.RequestTo == request.RunnerId);
+            .Where(r => r.RequestFrom == requester.RunnerId && r.RequestTo == person.RunnerId);
         if (existingRequest != null){
             throw new BusinessException(
                 "Friend request already exists",
@@ -114,7 +115,10 @@ public class PeopleService : IPeople
         friendRequest.RequestFrom = request.RunnerId;
         friendRequest.Status = "P";
         var response = await _dbContext.AddAsync(friendRequest);
-        await _dbContext.SaveChangesAsync();
+        var result = await _dbContext.SaveChangesAsync();
+
+        //Email sending can be queued
+        //_emailService.SendAsync("zephrichards1@gmail.com", "from", "htmlMessage");
         return _mapper.Map<Friend, FriendRequestResponse>(friendRequest);
     }
 }
