@@ -2,6 +2,7 @@
 using Application.Interfaces;
 using Application.Middlewares.ErrorHandling;
 using Application.Models.Request.People;
+using Application.Models.Response;
 using Application.Models.Response.People;
 using AutoMapper;
 using Domain.Entities;
@@ -53,7 +54,7 @@ public class PeopleService : IPeople
     {
         var requester = await _dbContext.Profiles
             .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.RunnerId == request.RunnerId);
+            .FirstOrDefaultAsync(p => p.RunnerId == request.RequesterId);
         if (requester == null)
         {
             throw new BusinessException(
@@ -64,7 +65,7 @@ public class PeopleService : IPeople
         
         var person = await _dbContext.Profiles
             .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.RunnerId == request.PersonId) ;
+            .FirstOrDefaultAsync(p => p.RunnerId == request.RequestedId) ;
         if (person == null)
         {
             throw new BusinessException(
@@ -80,7 +81,7 @@ public class PeopleService : IPeople
     {
         var requester = await _dbContext.Profiles
             .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.RunnerId == request.RunnerId);
+            .FirstOrDefaultAsync(p => p.RunnerId == request.RequestedId);
         if (requester == null)
         {
             throw new BusinessException(
@@ -91,7 +92,7 @@ public class PeopleService : IPeople
         
         var person = await _dbContext.Profiles
             .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.RunnerId == request.PersonId) ;
+            .FirstOrDefaultAsync(p => p.RunnerId == request.RequestedId) ;
 
         if (person == null)
         {
@@ -103,7 +104,7 @@ public class PeopleService : IPeople
 
         var existingRequest = _dbContext.Friends
             .AsNoTracking()
-            .Where(r => r.RequestFrom == requester.RunnerId && r.RequestTo == person.RunnerId);
+            .FirstOrDefaultAsync(r => r.RequestFrom == requester.RunnerId && r.RequestTo == person.RunnerId);
         if (existingRequest != null){
             throw new BusinessException(
                 "Friend request already exists",
@@ -112,7 +113,7 @@ public class PeopleService : IPeople
         }
 
         var friendRequest = _mapper.Map<Profile, Friend>(person);
-        friendRequest.RequestFrom = request.RunnerId;
+        friendRequest.RequestFrom = request.RequesterId;
         friendRequest.Status = "P";
         var response = await _dbContext.AddAsync(friendRequest);
         var result = await _dbContext.SaveChangesAsync();
@@ -120,5 +121,54 @@ public class PeopleService : IPeople
         //Email sending can be queued
         //_emailService.SendAsync("zephrichards1@gmail.com", "from", "htmlMessage");
         return _mapper.Map<Friend, FriendRequestResponse>(friendRequest);
+    }
+    
+    public async Task<FriendRequestResponse> GetFriendRequest(GetFriendRequestRequest request)
+    {
+        var requester = await _dbContext.Profiles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.RunnerId == request.RequesterId);
+        if (requester == null)
+        {
+            throw new BusinessException(
+                "You are not allowed to access this resource.",
+                "USER_NOT_ALLOWED",
+                401);
+        }
+        
+        var person = await _dbContext.Profiles
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.RunnerId == request.RequestedId);
+
+        if (person == null)
+        {
+            throw new BusinessException(
+                "Person not found",
+                "PERSON_NOT_FOUND",
+                404);
+        }
+        
+        var existingRequest = await _dbContext.Friends
+            .AsNoTracking()
+            .FirstOrDefaultAsync(r => r.RequestFrom == requester.RunnerId && r.RequestTo == person.RunnerId && r.FriendId == request.FriendRequestId);
+        if (existingRequest == null){
+            throw new BusinessException(
+                "Friend request not found",
+                "DUPLICATE_REQUEST",
+                404);
+        }
+
+        return new FriendRequestResponse
+        {
+            RequestId = request.FriendRequestId,
+            NickName = person.NickName,
+            Address = person.Address,
+            RequestStatus = existingRequest.Status,
+        };
+    }
+
+    public async Task<FriendRequestResponse> GetFriendRequests(GetFriendRequestRequest request)
+    {
+        throw new NotImplementedException();
     }
 }

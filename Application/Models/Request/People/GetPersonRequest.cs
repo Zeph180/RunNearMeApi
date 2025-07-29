@@ -2,6 +2,6 @@
 
 public class GetPersonRequest
 {
-    public required Guid RunnerId { get; set; }
-    public required Guid PersonId { get; set; }
+    public required Guid RequesterId { get; set; }
+    public required Guid RequestedId { get; set; }
 }

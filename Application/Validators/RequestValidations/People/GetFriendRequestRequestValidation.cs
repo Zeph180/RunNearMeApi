@@ -3,9 +3,9 @@ using FluentValidation;
 
 namespace Application.Validators.RequestValidations.People;
 
-public class GetPersonRequestValidation : AbstractValidator<GetPersonRequest>
+public class GetFriendRequestRequestValidation : AbstractValidator<GetFriendRequestRequest>
 {
-    public GetPersonRequestValidation()
+    public GetFriendRequestRequestValidation()
     {
         RuleFor(x => x.RequesterId)
             .NotEmpty()
@@ -13,5 +13,8 @@ public class GetPersonRequestValidation : AbstractValidator<GetPersonRequest>
         RuleFor(x => x.RequestedId)
             .NotEmpty()
             .WithMessage("PersonId is required");
+        RuleFor(x => x.FriendRequestId)
+            .NotEmpty()
+            .WithMessage("FriendRequestId is required");
     }
 }
