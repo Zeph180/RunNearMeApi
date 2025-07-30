@@ -1,7 +1,9 @@
 ﻿using System.Net;
 using Application.Interfaces;
 using Application.Interfaces.Dtos;
+using Application.Wrappers;
 using Domain.Entities;
+using Domain.Models.Request.Account;
 using Microsoft.AspNetCore.Mvc;
 
 namespace RunNearMe.Controllers;
@@ -17,11 +19,15 @@ public class RunnerController : ControllerBase
     {
         _runner = runner;
     }
-    
+    /// <summary>
+    /// This method is responsible for creating new user accounts
+    /// </summary>
+    /// <param name="request"></param>
+    /// <returns></returns>
     [HttpPost("signup")]
-    public async Task<IActionResult> CreateRunner(RunnerDto runnerDto)
+    public async Task<IActionResult> CreateAccount(AccountCreateRequest request)
     {
-       var response = await _runner.CreateRunner<RunnerDto, Runner>(runnerDto);
-       return Ok(response);
+        var response = await _runner.CreateAccount(request);
+        return Ok(ApiResponse<object>.SuccessResponse(response));
     }
 }
