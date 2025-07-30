@@ -55,4 +55,11 @@ public class People : ControllerBase
       var response = await _people.GetFriendRequest(request);
       return Ok(ApiResponse<object>.SuccessResponse(response));
    }
+
+   [HttpGet("get-friend-requests/{runnerId}")]
+   public async Task<IActionResult> GetFriendRequests([FromRoute] Guid runnerId)
+   {
+      var response = await _people.GetFriendRequests(runnerId);
+      return Ok(ApiResponse<object>.SuccessResponse(response));
+   }
 }

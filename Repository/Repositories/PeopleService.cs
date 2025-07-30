@@ -29,8 +29,6 @@ public class PeopleService : IPeople
         _emailService = emailService;
     }
     
-    
-
     public async Task<List<Person>> GetPeople(Guid runnerId)
     {
         if (!_dbContext.Profiles.Any(r => r.RunnerId == runnerId))
@@ -111,10 +109,9 @@ public class PeopleService : IPeople
         };
     }
     
-    
-    public async Task<List<FriendRequestResponse>> GetFriendRequests(GetFriendRequestRequest request)
+    public async Task<List<FriendRequestResponse>> GetFriendRequests(Guid request)
     {
-        var requester = await GetValidProfileAsync(request.RequesterId, ErrorCodes.UserNotAllowed, ErrorMessages.UserNotAllowed);
+        var requester = await GetValidProfileAsync(request, ErrorCodes.UserNotAllowed, ErrorMessages.UserNotAllowed);
         var friendRequests = await _dbContext.Friends
             .Where(fr => fr.Status == "P" && fr.RequestTo == requester.RunnerId)
             .Select(fr => new FriendRequestResponse
