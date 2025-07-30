@@ -30,7 +30,7 @@ public class Authentication : ControllerBase
     public async Task<IActionResult> Register([FromBody] AccountCreateRequest request)
     {
         var response = await _authentication.CreateAccount(request);
-        return Ok(response);
+        return Ok(ApiResponse<object>.SuccessResponse(response));
     }
 
     /// <summary>
