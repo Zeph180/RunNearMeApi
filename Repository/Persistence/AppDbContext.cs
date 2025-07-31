@@ -27,11 +27,19 @@ public class AppDbContext : DbContext
             .WithOne(x => x.Profile)
             .HasForeignKey(x => x.RunnerId)
             .IsRequired();
-
-        modelBuilder.Entity<Profile>()
-            .HasMany(x => x.Friends)
-            .WithMany(x => x.Profiles);
         
+        modelBuilder.Entity<Friend>()
+            .HasOne(f => f.RequestFromProfile)
+            .WithMany()
+            .HasForeignKey(f => f.RequestFrom)
+            .OnDelete(DeleteBehavior.Restrict);
+        
+        modelBuilder.Entity<Friend>()
+            .HasOne(f => f.RequestToProfile)
+            .WithMany()
+            .HasForeignKey(f => f.RequestTo)
+            .OnDelete(DeleteBehavior.Restrict);
+
     }
 
     public DbSet<Runner> Runners { get; set; }

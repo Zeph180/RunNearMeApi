@@ -113,13 +113,14 @@ public class PeopleService : IPeople
     {
         var requester = await GetValidProfileAsync(request, ErrorCodes.UserNotAllowed, ErrorMessages.UserNotAllowed);
         var friendRequests = await _dbContext.Friends
+            .Include(fr => fr.RequestFromProfile)
             .Where(fr => fr.Status == "P" && fr.RequestTo == requester.RunnerId)
             .Select(fr => new FriendRequestResponse
             {
-                Address = "",
-                NickName = "",
+                Address = fr.RequestFromProfile.Address,
+                NickName = fr.RequestFromProfile.NickName,
                 FriendRequestId = fr.FriendId,
-                RequestStatus = fr.Status,
+                RequestStatus = fr.Status
             }).ToListAsync();
 
         return friendRequests;
