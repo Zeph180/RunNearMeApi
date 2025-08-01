@@ -42,6 +42,11 @@ public class People : ControllerBase
       return Ok(ApiResponse<object>.SuccessResponse(person));
    }
 
+   /// <summary>
+   /// Sends a friend request
+   /// </summary>
+   /// <param name="request"></param>
+   /// <returns></returns>
    [HttpPost("request-friendship")]
    public async Task<IActionResult> SendFriendRequest([FromBody] GetPersonRequest request)
    {
@@ -49,6 +54,11 @@ public class People : ControllerBase
       return Ok(ApiResponse<object>.SuccessResponse(response));
    }
 
+   /// <summary>
+   /// Gets a single friend request 
+   /// </summary>
+   /// <param name="request"></param>
+   /// <returns></returns>
    [HttpPost("get-friend-request")]
    public async Task<IActionResult> GetFriendRequest([FromBody] GetFriendRequestRequest request)
    {
@@ -56,10 +66,28 @@ public class People : ControllerBase
       return Ok(ApiResponse<object>.SuccessResponse(response));
    }
 
+   /// <summary>
+   /// Gets all friend requests of a particular user
+   /// </summary>
+   /// <param name="runnerId"></param>
+   /// <returns></returns>
    [HttpGet("get-friend-requests/{runnerId}")]
    public async Task<IActionResult> GetFriendRequests([FromRoute] Guid runnerId)
    {
       var response = await _people.GetFriendRequests(runnerId);
+      return Ok(ApiResponse<object>.SuccessResponse(response));
+   }
+   
+   /// <summary>
+   /// Used to update friend requests,
+   /// 'A' = Approve, D = Declined, I = Ignored, P = Pending
+   /// </summary>
+   /// <param name="request"></param>
+   /// <returns></returns>
+   [HttpPost("update-friend-request")]
+   public async Task<IActionResult> ApproveFriendRequest([FromBody] UpdateFriendShip request)
+   {
+      var response = await _people.UpdateFriendRequest(request);
       return Ok(ApiResponse<object>.SuccessResponse(response));
    }
 }

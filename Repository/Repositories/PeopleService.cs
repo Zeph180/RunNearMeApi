@@ -103,6 +103,7 @@ public class PeopleService : IPeople
         return new FriendRequestResponse
         {
             FriendRequestId = request.FriendRequestId,
+            RequesterId = request.RequesterId,
             NickName = person.NickName,
             Address = person.Address,
             RequestStatus = existingRequest.Status,
@@ -118,12 +119,41 @@ public class PeopleService : IPeople
             .Select(fr => new FriendRequestResponse
             {
                 Address = fr.RequestFromProfile.Address,
+                RequesterId = fr.RequestFromProfile.RunnerId,
                 NickName = fr.RequestFromProfile.NickName,
                 FriendRequestId = fr.FriendId,
-                RequestStatus = fr.Status
+                RequestStatus = fr.Status,
+                
             }).ToListAsync();
 
         return friendRequests;
+    }
+
+    public async Task<FriendRequestResponse> UpdateFriendRequest(UpdateFriendShip request)
+    {
+        var requester = await GetValidProfileAsync(request.CurrentUserId,ErrorCodes.UserNotAllowed, ErrorMessages.UserNotAllowed);
+        var friendRequest = await GetExistingFriendRequestAsync(requester.RunnerId, request.RequestedId, request.FriendShipId, true);
+        var isStatusValid = IsStatusValid(request.Status);
+        
+        if (request.Status == friendRequest.Status)
+        {
+            string statusMsg = request.Status switch
+            {
+                "A" => "ACCEPTED",
+                "P" => "PENDING",
+                "D" => "DECLINED",
+                "I" => "IGNORED",
+                _ => "UNKNOWN"
+            };
+            throw new BusinessException($"Friend request already {statusMsg}");
+        }
+        
+        friendRequest.Status = request.Status;
+        _dbContext.Update(friendRequest);
+        await _dbContext.SaveChangesAsync();
+        var response = _mapper.Map<Friend, FriendRequestResponse>(friendRequest);
+        //_emailService.SendAsync("toemail", "new friend", "message");
+        return response;
     }
     
     private async Task<Profile> GetValidProfileAsync(Guid runnerId, string errorCode, string errorMessage)
@@ -132,22 +162,49 @@ public class PeopleService : IPeople
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.RunnerId == runnerId);
 
-        if (profile == null)
+        if (profile is null)
         {
             throw new BusinessException(errorMessage, errorCode, 404);
         }
-
         return profile;
     }
     
-    private async Task<Friend?> GetExistingFriendRequestAsync(Guid requesterId, Guid requestedId, Guid? friendRequestId = null)
+    private async Task<Friend?> GetExistingFriendRequestAsync(Guid currentUser, Guid requestedId, Guid? friendShipId = null, bool track = false)
     {
-        return await _dbContext.Friends
-            .AsNoTracking()
-            .FirstOrDefaultAsync(r =>
-                r.RequestFrom == requesterId &&
-                r.RequestTo == requestedId &&
-                (friendRequestId == null || r.FriendId == friendRequestId));
+        Friend? friendRequest;
+
+        switch (track)
+        {
+            case false:
+                friendRequest = await _dbContext.Friends
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(r =>
+                        r.RequestFrom == currentUser &&
+                        r.RequestTo == requestedId);
+                break;
+            case true:
+                friendRequest = await _dbContext.Friends
+                    .FirstOrDefaultAsync(r =>
+                        r.RequestFrom == requestedId &&
+                        r.RequestTo == currentUser && r.FriendId == friendShipId);
+                break;
+        }
+        
+        if (friendRequest is null)
+        {
+            throw new BusinessException(ErrorCodes.FriendRequestNotFound, ErrorCodes.FriendRequestNotFound, 404);
+        }
+        return friendRequest;
     }
-    
+
+    private static Task<bool> IsStatusValid(string status)
+    {
+        List<string> requestStatuses = [ "A", "P", "D", "I" ];
+        var isValid = requestStatuses.Contains(status);
+        if (!isValid)
+        {
+            throw new BusinessException("Invalid friend request status", "INVALID_STATUS", 400);
+        }
+        return Task.FromResult(isValid);
+    }
 }

@@ -3,7 +3,8 @@
 public class FriendRequestResponse
 {
     public Guid FriendRequestId { get; set; }
-    public string RequestStatus { get; set; } = "Pending";
+    public Guid RequesterId { get; set; }
+    public required string RequestStatus { get; set; }
     public required string NickName { get; set; }
     public required string Address { get; set; }
 }

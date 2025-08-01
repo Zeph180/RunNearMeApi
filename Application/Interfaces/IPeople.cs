@@ -11,4 +11,5 @@ public interface IPeople
     Task<FriendRequestResponse> SendFriendRequest(GetPersonRequest request);
     Task<FriendRequestResponse> GetFriendRequest (GetFriendRequestRequest request);
     Task<List<FriendRequestResponse>> GetFriendRequests (Guid request);
+    Task<FriendRequestResponse> UpdateFriendRequest(UpdateFriendShip request);
 }
