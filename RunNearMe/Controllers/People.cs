@@ -80,12 +80,12 @@ public class People : ControllerBase
    
    /// <summary>
    /// Used to update friend requests,
-   /// 'A' = Approve, D = Declined, I = Ignored, P = Pending
+   /// 'A' = Approve, D = Declined, I = Ignored, P = Pending, C = canceled, U = Unfriend
    /// </summary>
    /// <param name="request"></param>
    /// <returns></returns>
    [HttpPost("update-friend-request")]
-   public async Task<IActionResult> ApproveFriendRequest([FromBody] UpdateFriendShip request)
+   public async Task<IActionResult> UpdateFriendRequest([FromBody] UpdateFriendShip request)
    {
       var response = await _people.UpdateFriendRequest(request);
       return Ok(ApiResponse<object>.SuccessResponse(response));
