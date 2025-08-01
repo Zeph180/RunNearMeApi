@@ -156,6 +156,7 @@ public class PeopleService : IPeople
             await GetExistingFriendRequestAsync(requester.RunnerId, request.RequestedId, request.FriendShipId, true);
         var isStatusValid = IsStatusValid(request.Status);
 
+        
         if (request.Status == friendRequest.Status)
         {
             string statusMsg = request.Status switch
