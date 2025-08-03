@@ -7,4 +7,6 @@ public class ErrorMessages
     public const string DuplicateRequest = "Friend request already exists.";
     public const string FriendRequestNotFound = "Friend request not found.";
     public const string ActionNotAllowed = "You are not allowed to perform this action.";
+    public const string IncompleteRun = "You still have an uncompleted run.";
+    public const string NoIncompleteRunFound = "No incomplete run found.";
 }

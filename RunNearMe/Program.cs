@@ -13,6 +13,7 @@ using Microsoft.IdentityModel.Tokens;
 using Repository.Mapping;
 using Repository.Persistence;
 using Repository.Repositories;
+using Repository.Repositories.Helpers;
 
 namespace RunNearMe;
 
@@ -67,6 +68,8 @@ public class Program
         builder.Services.AddScoped<IAuthentication, AuthenticationRepository>();
         builder.Services.AddScoped<IEmailService, EmailService>();
         builder.Services.AddScoped<IPeople, PeopleService>();
+        builder.Services.AddScoped<IRun, RunService>();
+        builder.Services.AddScoped<IPeopleHelper, PeopleHelpers>();
         
         builder.Services.AddFluentValidationAutoValidation();
         builder.Services.AddFluentValidationClientsideAdapters();
