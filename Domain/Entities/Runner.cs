@@ -18,4 +18,5 @@ public class Runner
     public string? EmailConfirmationToken { get; set; }
     public DateTime TokenGeneratedAt { get; set; }
     public DateTime TokenConfirmedAt { get; set; }
+    public List<RunRoutePoint>? RoutePoints { get; set; }
 }

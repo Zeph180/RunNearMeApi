@@ -6,7 +6,6 @@ namespace Domain.Entities;
 public class Friend
 {
     public Guid FriendId { get; set; }
-    
     public Guid RequestFrom { get; set; }
     public Guid RequestTo { get; set; }
     

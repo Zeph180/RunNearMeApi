@@ -6,4 +6,5 @@ public class ErrorMessages
     public const string PersonNotFound = "Person not found.";
     public const string DuplicateRequest = "Friend request already exists.";
     public const string FriendRequestNotFound = "Friend request not found.";
+    public const string ActionNotAllowed = "You are not allowed to perform this action.";
 }

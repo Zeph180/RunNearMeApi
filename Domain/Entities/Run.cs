@@ -1,8 +1,11 @@
-﻿namespace Domain.Entities;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Domain.Entities;
 
 public class Run
 {
     public Guid RunId { get; set; }
+    [ForeignKey("RunnerId")]
     public Guid RunnerId { get; set; }
     public DateTime StartTime { get; set; }
     public DateTime EndTime { get; set; }
@@ -13,5 +16,7 @@ public class Run
     public double CaloriesBurned { get; set; }
     public double AverageHeartRate { get; set; }
     public DateTime CreatedAt { get; set; }
-    public Profile? Profile { get; set; }
+    
+    public required Profile Profile { get; set; }
+    public required List<RunRoutePoint> RoutePoints { get; set; }
 }

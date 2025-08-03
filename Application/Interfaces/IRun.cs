@@ -2,5 +2,5 @@
 
 public interface IRun
 {
-    
+    //Task<Void> StartRun()
 }

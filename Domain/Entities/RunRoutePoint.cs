@@ -1,15 +1,11 @@
-﻿namespace Domain.Entities;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 
-public class RunRoutePoints
+namespace Domain.Entities;
+
+public class RunRoutePoint
 {
-    public Guid RoutePointId { get; set; }
+    public Guid RunRoutePointId { get; set; }
     public Decimal Latitude { get; set; }
     public Decimal Longitude { get; set; }
     public DateTime Timestamp { get; set; }
-    
-    //Navigational properties
-    public Guid RunId { get; set; }
-    public Guid RunnerId { get; set; }
-    public required Runner Runner { get; set; }
-    public required Run Run { get; set; }
 }
