@@ -1,9 +1,7 @@
-﻿using Application.Enums;
-using Application.Errors;
+﻿using Application.Errors;
 using Application.Interfaces;
 using Application.Middlewares.ErrorHandling;
 using Application.Models.Request.People;
-using Application.Models.Response;
 using Application.Models.Response.People;
 using AutoMapper;
 using Domain.Entities;
@@ -20,28 +18,27 @@ public class PeopleService : IPeople
     private readonly IMapper _mapper;
     private readonly IConfiguration _configuration;
     private readonly IEmailService _emailService;
-
+    private readonly IPeopleHelper _peopleHelper;
+    
     public PeopleService(AppDbContext dbContext, IMapper mapper, IConfiguration configuration,
-        IEmailService emailService)
+        IEmailService emailService, IPeopleHelper peopleHelper)
     {
         _dbContext = dbContext;
         _mapper = mapper;
         _configuration = configuration;
         _emailService = emailService;
+        _peopleHelper = peopleHelper;
     }
 
-    public async Task<List<Person>> GetPeople(Guid runnerId)
+    public async Task<List<Person>> GetPeople(Guid runnerId, int pageNumber = 1, int pageSize = 10)
     {
-        if (!_dbContext.Profiles.Any(r => r.RunnerId == runnerId))
-        {
-            throw new BusinessException(
-                "Either runner not found or profile incomplete.",
-                "RUNNER_NOT_FOUND",
-                404);
-        }
+        await _peopleHelper.GetValidProfileAsync(runnerId, "USER_NOT_ALLOWED",
+            "You are not allowed to access this resource.");
 
         var people = await _dbContext.Profiles
             .Where(p => p.RunnerId != runnerId)
+            .OrderBy(p => p.NickName)
+            .Skip((pageNumber - 1) * pageSize)
             .Select(p => new Person
             {
                 RunnerId = p.RunnerId,
@@ -52,18 +49,18 @@ public class PeopleService : IPeople
 
     public async Task<GetPersonResponse> GetPerson(GetPersonRequest request)
     {
-        var requester = await GetValidProfileAsync(request.RequesterId, "USER_NOT_ALLOWED",
+        await _peopleHelper.GetValidProfileAsync(request.RequesterId, "USER_NOT_ALLOWED",
             "You are not allowed to access this resource.");
-        var person = await GetValidProfileAsync(request.RequestedId, "PERSON_NOT_FOUND", "Person not found.");
+        var person = await _peopleHelper.GetValidProfileAsync(request.RequestedId, "PERSON_NOT_FOUND", "Person not found.");
 
         return _mapper.Map<Profile, GetPersonResponse>(person);
     }
 
     public async Task<FriendRequestResponse> SendFriendRequest(GetPersonRequest request)
     {
-        var requester = await GetValidProfileAsync(request.RequesterId, "USER_NOT_ALLOWED",
+        var requester = await _peopleHelper.GetValidProfileAsync(request.RequesterId, "USER_NOT_ALLOWED",
             "You are not allowed to access this resource.");
-        var person = await GetValidProfileAsync(request.RequestedId, "PERSON_NOT_FOUND", "Person not found");
+        var person = await _peopleHelper.GetValidProfileAsync(request.RequestedId, "PERSON_NOT_FOUND", "Person not found");
 
         var existingRequest = await _dbContext.Friends
             .AsNoTracking()
@@ -93,12 +90,12 @@ public class PeopleService : IPeople
 
     public async Task<FriendRequestResponse> GetFriendRequest(GetFriendRequestRequest request)
     {
-        var requester = await GetValidProfileAsync(request.RequesterId, "USER_NOT_ALLOWED",
+        var requester = await _peopleHelper.GetValidProfileAsync(request.RequesterId, "USER_NOT_ALLOWED",
             "You are not allowed to access this resource.");
-        var person = await GetValidProfileAsync(request.RequestedId, "PERSON_NOT_FOUND", "Person not found");
+        var person = await _peopleHelper.GetValidProfileAsync(request.RequestedId, "PERSON_NOT_FOUND", "Person not found");
 
         var existingRequest =
-            await GetExistingFriendRequestAsync(requester.RunnerId, person.RunnerId, request.FriendRequestId);
+            await _peopleHelper.GetExistingFriendRequestAsync(requester.RunnerId, person.RunnerId, request.FriendRequestId);
         if (existingRequest == null)
         {
             throw new BusinessException(
@@ -117,12 +114,33 @@ public class PeopleService : IPeople
         };
     }
 
-    public async Task<FriendRequestsListResponse> GetFriendRequests(Guid request)
+    public async Task<FriendRequestsListResponse> GetFriendRequests(Guid request, int pageSize = 10, int pageNumber = 1)
     {
-        var requester = await GetValidProfileAsync(request, ErrorCodes.UserNotAllowed, ErrorMessages.UserNotAllowed);
-        var allfriendRequests = await _dbContext.Friends
+        var requester = await _peopleHelper.GetValidProfileAsync(request, ErrorCodes.UserNotAllowed, ErrorMessages.UserNotAllowed);
+        var allFriendRequests = await _dbContext.Friends
             .Include(fr => fr.RequestFromProfile)
-            .Where(fr => fr.Status == "P" && fr.RequestTo == requester.RunnerId)
+            .Include(fr => fr.RequestToProfile)
+            .Where(fr =>
+                fr.Status == "P" && (fr.RequestTo == requester.RunnerId || fr.RequestFrom == requester.RunnerId))
+            .Select(fr => fr)
+            .ToListAsync();
+
+        var sentRequests = allFriendRequests
+            .Where(fr => fr.RequestFrom == requester.RunnerId)
+            .Skip((pageNumber - 1) * pageSize)
+            .Select(fr => new FriendRequestResponse
+            {
+                Address = fr.RequestFromProfile.Address,
+                RequesterId = fr.RequestFromProfile.RunnerId,
+                NickName = fr.RequestToProfile.NickName,
+                FriendRequestId = fr.FriendId,
+                RequestStatus = fr.Status,
+            })
+            .ToList();
+
+        var receivedRequests = allFriendRequests
+            .Where(fr => fr.RequestTo == requester.RunnerId)
+            .Skip((pageNumber - 1) * pageSize)
             .Select(fr => new FriendRequestResponse
             {
                 Address = fr.RequestFromProfile.Address,
@@ -130,33 +148,26 @@ public class PeopleService : IPeople
                 NickName = fr.RequestFromProfile.NickName,
                 FriendRequestId = fr.FriendId,
                 RequestStatus = fr.Status,
-            }).ToListAsync();
-
-        var sentRequests = allfriendRequests
-            .Where(fr => fr.RequesterId == requester.RunnerId)
-            .ToList();
-
-        var receivedRequests = allfriendRequests
-            .Where(fr => fr.RequesterId != requester.RunnerId)
+            })
             .ToList();
 
         var friendRequests = new FriendRequestsListResponse
         {
-            ReceivedRequests = sentRequests,
-            SentRequests = receivedRequests
+            ReceivedRequests = receivedRequests,
+            SentRequests = sentRequests
         };
         return friendRequests;
     }
 
     public async Task<FriendRequestResponse> UpdateFriendRequest(UpdateFriendShip request)
     {
-        var requester = await GetValidProfileAsync(request.CurrentUserId, ErrorCodes.UserNotAllowed,
+        var requester = await _peopleHelper.GetValidProfileAsync(request.CurrentUserId, ErrorCodes.UserNotAllowed,
             ErrorMessages.UserNotAllowed);
         var friendRequest =
-            await GetExistingFriendRequestAsync(requester.RunnerId, request.RequestedId, request.FriendShipId, true);
+            await _peopleHelper.GetExistingFriendRequestAsync(requester.RunnerId, request.RequestedId, request.FriendShipId, true);
+
         var isStatusValid = IsStatusValid(request.Status);
 
-        
         if (request.Status == friendRequest.Status)
         {
             string statusMsg = request.Status switch
@@ -165,66 +176,23 @@ public class PeopleService : IPeople
                 "P" => "PENDING",
                 "D" => "DECLINED",
                 "I" => "IGNORED",
+                "C" => "CANCELLED",
                 _ => "UNKNOWN"
             };
             throw new BusinessException($"Friend is request already {statusMsg}");
         }
 
-        friendRequest.Status = request.Status;
-        _dbContext.Update(friendRequest);
-        await _dbContext.SaveChangesAsync();
+        friendRequest = await _peopleHelper.UpdateFriendRequestHelper(request);
+        
         var response = _mapper.Map<Friend, FriendRequestResponse>(friendRequest);
         //_emailService.SendAsync("toemail", "new friend", "message");
         return response;
     }
 
-    private async Task<Profile> GetValidProfileAsync(Guid runnerId, string errorCode, string errorMessage)
+    private Task<bool> IsStatusValid(string status)
     {
-        var profile = await _dbContext.Profiles
-            .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.RunnerId == runnerId);
-
-        if (profile is null)
-        {
-            throw new BusinessException(errorMessage, errorCode, 404);
-        }
-
-        return profile;
-    }
-
-    private async Task<Friend?> GetExistingFriendRequestAsync(Guid currentUser, Guid requestedId,
-        Guid? friendShipId = null, bool track = false)
-    {
-        Friend? friendRequest;
-
-        switch (track)
-        {
-            case false:
-                friendRequest = await _dbContext.Friends
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(r =>
-                        r.RequestFrom == currentUser &&
-                        r.RequestTo == requestedId);
-                break;
-            case true:
-                friendRequest = await _dbContext.Friends
-                    .FirstOrDefaultAsync(r =>
-                        r.RequestFrom == requestedId &&
-                        r.RequestTo == currentUser && r.FriendId == friendShipId);
-                break;
-        }
-
-        if (friendRequest is null)
-        {
-            throw new BusinessException(ErrorCodes.FriendRequestNotFound, ErrorCodes.FriendRequestNotFound, 404);
-        }
-
-        return friendRequest;
-    }
-
-    private static Task<bool> IsStatusValid(string status)
-    {
-        List<string> requestStatuses = ["A", "P", "D", "I"];
+        var requestStatuses = _configuration.GetSection("Friendship:SentFriendRequestAllowedStatus")
+            .Get<List<string>>();
         var isValid = requestStatuses.Contains(status);
         if (!isValid)
         {

@@ -5,7 +5,7 @@
 namespace Repository.Migrations
 {
     /// <inheritdoc />
-    public partial class _123 : Migration
+    public partial class addRunRoutePoints88tker : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

@@ -1,4 +1,5 @@
 ﻿using Application.Interfaces.Dtos;
+using Application.Interfaces.Dtos.Run;
 using Application.Models.Request.Authentication;
 using Application.Models.Response.People;
 using AutoMapper;
@@ -46,7 +47,46 @@ public class MapperService : Profile
         CreateMap<Friend, FriendRequestResponse>()
             .ForMember(dest => dest.FriendRequestId, opt => opt.MapFrom(src => src.FriendId))
             .ForMember(dest => dest.RequestStatus, opt => opt.MapFrom(src => src.Status));
+        
         CreateMap<Domain.Entities.Profile, Friend>()
             .ForMember(dest => dest.RequestTo, opt => opt.MapFrom(src => src.RunnerId));
+
+        CreateMap<RunDto, Run>()
+            .ForMember(dest => dest.RunnerId, opt => opt.MapFrom(src => src.RunnerId))
+            .ForMember(dest => dest.RunId, opt => opt.MapFrom(src => src.RunId))
+            .ForMember(dest => dest.AverageHeartRate, opt => opt.MapFrom(src => src.AverageHeartRate))
+            .ForMember(dest => dest.CaloriesBurned, opt => opt.MapFrom(src => src.CaloriesBurned))
+            .ForMember(dest => dest.DistanceInMeters, opt => opt.MapFrom(src => src.DistanceInMeters))
+            .ForMember(dest => dest.AveragePace, opt => opt.MapFrom(src => src.AveragePace))
+            .ForMember(dest => dest.DurationInSeconds, opt => opt.MapFrom(src => src.DurationInSeconds))
+            .ForMember(dest => dest.MaxPace, opt => opt.MapFrom(src => src.MaxPace))
+            .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+            .ForMember(dest => dest.RoutePoints, opt => opt.MapFrom(src => src.RoutePoints));
+
+        CreateMap<RoutePointDto, RunRoutePoint>()
+            .ForMember(dest => dest.RunRoutePointId, opt => opt.Ignore())
+            .ForMember(dest => dest.RunId, opt => opt.Ignore())
+            .ForMember(dest => dest.Run, opt => opt.Ignore());
+        
+        CreateMap<Run, RunDto>()
+            .ForMember(dest => dest.RunnerId, opt => opt.MapFrom(src => src.RunnerId))
+            .ForMember(dest => dest.RunId, opt => opt.MapFrom(src => src.RunId))
+            .ForMember(dest => dest.AverageHeartRate, opt => opt.MapFrom(src => src.AverageHeartRate))
+            .ForMember(dest => dest.CaloriesBurned, opt => opt.MapFrom(src => src.CaloriesBurned))
+            .ForMember(dest => dest.DistanceInMeters, opt => opt.MapFrom(src => src.DistanceInMeters))
+            .ForMember(dest => dest.AveragePace, opt => opt.MapFrom(src => src.AveragePace))
+            .ForMember(dest => dest.DurationInSeconds, opt => opt.MapFrom(src => src.DurationInSeconds))
+            .ForMember(dest => dest.MaxPace, opt => opt.MapFrom(src => src.MaxPace))
+            .ForMember(dest => dest.RoutePoints, opt => opt.MapFrom(src => src.RoutePoints));
+
+        CreateMap<RunRoutePoint, RoutePointDto>()
+            .ForMember(dest => dest.Altitude, opt => opt.MapFrom(src => src.Altitude))
+            .ForMember(dest => dest.Latitude, opt => opt.MapFrom(src => src.Latitude))
+            .ForMember(dest => dest.Longitude,
+                opt => opt.MapFrom(src => src.Longitude))
+            .ForMember(dest => dest.SequenceNumber,
+                opt => opt.MapFrom(src => src.SequenceNumber))
+            .ForMember(dest => dest.Timestamp,
+                opt => opt.MapFrom(src => src.Timestamp));
     }
 }
