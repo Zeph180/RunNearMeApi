@@ -1,22 +1,31 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Domain.Entities;
 
 public class Run
 {
-    public Guid RunId { get; set; }
-    [ForeignKey("RunnerId")]
-    public Guid RunnerId { get; set; }
-    public DateTime StartTime { get; set; }
-    public DateTime EndTime { get; set; }
-    public double DistanceInMeters { get; set; }
-    public double DurationInSeconds { get; set; }
-    public double AveragePace { get; set; }
-    public double MaxPace { get; set; }
-    public double CaloriesBurned { get; set; }
-    public double AverageHeartRate { get; set; }
-    public DateTime CreatedAt { get; set; }
-    
-    public required Profile Profile { get; set; }
-    public required List<RunRoutePoint> RoutePoints { get; set; }
+    [Key] public Guid RunId { get; set; }
+    [ForeignKey(nameof(Profile))] public Guid RunnerId { get; set; }
+
+    public DateTime StartTime { get; set; } = DateTime.UtcNow;
+    public DateTime? EndTime { get; set; }
+
+    [Range(0, double.MaxValue)] public double DistanceInMeters { get; set; }
+
+    [Range(0, double.MaxValue)] public double DurationInSeconds { get; set; }
+
+    [Range(0, double.MaxValue)] public double AveragePace { get; set; }
+
+    [Range(0, double.MaxValue)] public double MaxPace { get; set; }
+
+    [Range(0, double.MaxValue)] public double CaloriesBurned { get; set; }
+
+    [Range(0, double.MaxValue)] public double AverageHeartRate { get; set; }
+
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? UpdatedAt { get; set; }
+
+    public virtual Profile Profile { get; set; } = null!;
+    public virtual List<RunRoutePoint> RoutePoints { get; set; } = new List<RunRoutePoint>();
 }
