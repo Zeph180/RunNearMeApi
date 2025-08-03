@@ -12,8 +12,8 @@ using Repository.Persistence;
 namespace Repository.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250731180245_restructureFriendship")]
-    partial class restructureFriendship
+    [Migration("20250802223341_addRunRoutePoints88tk")]
+    partial class addRunRoutePoints88tk
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -372,6 +372,38 @@ namespace Repository.Migrations
                     b.ToTable("Runs");
                 });
 
+            modelBuilder.Entity("Domain.Entities.RunRoutePoint", b =>
+                {
+                    b.Property<Guid>("RunRoutePointId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Latitude")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<decimal>("Longitude")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<Guid?>("RunId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("RunnerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("RunRoutePointId");
+
+                    b.HasIndex("RunId");
+
+                    b.HasIndex("RunnerId");
+
+                    b.ToTable("RunRoutePoints");
+                });
+
             modelBuilder.Entity("Domain.Entities.Runner", b =>
                 {
                     b.Property<Guid>("RunnerId")
@@ -527,10 +559,21 @@ namespace Repository.Migrations
                     b.HasOne("Domain.Entities.Profile", "Profile")
                         .WithMany("Runs")
                         .HasForeignKey("RunnerId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Profile");
+                });
+
+            modelBuilder.Entity("Domain.Entities.RunRoutePoint", b =>
+                {
+                    b.HasOne("Domain.Entities.Run", null)
+                        .WithMany("RoutePoints")
+                        .HasForeignKey("RunId");
+
+                    b.HasOne("Domain.Entities.Runner", null)
+                        .WithMany("RoutePoints")
+                        .HasForeignKey("RunnerId");
                 });
 
             modelBuilder.Entity("GroupProfile", b =>
@@ -571,9 +614,16 @@ namespace Repository.Migrations
                     b.Navigation("Runs");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Run", b =>
+                {
+                    b.Navigation("RoutePoints");
+                });
+
             modelBuilder.Entity("Domain.Entities.Runner", b =>
                 {
                     b.Navigation("Profile");
+
+                    b.Navigation("RoutePoints");
                 });
 #pragma warning restore 612, 618
         }

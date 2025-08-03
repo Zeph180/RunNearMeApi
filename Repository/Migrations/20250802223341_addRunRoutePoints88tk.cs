@@ -5,7 +5,7 @@
 namespace Repository.Migrations
 {
     /// <inheritdoc />
-    public partial class SyncSchemaUpdate2 : Migration
+    public partial class addRunRoutePoints88tk : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

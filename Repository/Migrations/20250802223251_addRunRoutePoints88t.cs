@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Repository.Migrations
 {
     /// <inheritdoc />
-    public partial class removeidentity : Migration
+    public partial class addRunRoutePoints88t : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -17,10 +17,10 @@ namespace Repository.Migrations
                 {
                     ChallengeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     RunnerId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Target = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    ImageUrl = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    Target = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    ImageUrl = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false)
                 },
@@ -35,8 +35,8 @@ namespace Repository.Migrations
                 {
                     GroupId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     RunnerId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false),
                     DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
@@ -51,9 +51,13 @@ namespace Repository.Migrations
                 columns: table => new
                 {
                     RunnerId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Password = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Email = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    Name = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    Password = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    Email = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    EmailConfirmed = table.Column<bool>(type: "bit", nullable: false),
+                    EmailConfirmationToken = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    TokenGeneratedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    TokenConfirmedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -65,10 +69,10 @@ namespace Repository.Migrations
                 columns: table => new
                 {
                     RunnerId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    NickName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Address = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    City = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    NickName = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
+                    PhoneNumber = table.Column<string>(type: "nvarchar(13)", maxLength: 13, nullable: false),
+                    Address = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    City = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     State = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Age = table.Column<int>(type: "int", nullable: false),
                     Height = table.Column<int>(type: "int", nullable: false),
@@ -114,9 +118,10 @@ namespace Repository.Migrations
                 columns: table => new
                 {
                     FriendId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    RunnerId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    RequestFrom = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    RequestTo = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Accepted = table.Column<bool>(type: "bit", nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(1)", maxLength: 1, nullable: false),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false),
                     ProfileRunnerId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
@@ -128,6 +133,18 @@ namespace Repository.Migrations
                         column: x => x.ProfileRunnerId,
                         principalTable: "Profiles",
                         principalColumn: "RunnerId");
+                    table.ForeignKey(
+                        name: "FK_Friends_Profiles_RequestFrom",
+                        column: x => x.RequestFrom,
+                        principalTable: "Profiles",
+                        principalColumn: "RunnerId",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Friends_Profiles_RequestTo",
+                        column: x => x.RequestTo,
+                        principalTable: "Profiles",
+                        principalColumn: "RunnerId",
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -160,7 +177,7 @@ namespace Repository.Migrations
                 {
                     NotificationId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     RunnerId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Message = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Message = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     IsRead = table.Column<bool>(type: "bit", nullable: false),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false),
@@ -183,13 +200,13 @@ namespace Repository.Migrations
                 {
                     PostId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     RunnerId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Message = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Message = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false),
                     DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    ImageUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    VideoUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Location = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ImageUrl = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    VideoUrl = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    Location = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     ProfileRunnerId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
@@ -216,15 +233,14 @@ namespace Repository.Migrations
                     MaxPace = table.Column<double>(type: "float", nullable: false),
                     CaloriesBurned = table.Column<double>(type: "float", nullable: false),
                     AverageHeartRate = table.Column<double>(type: "float", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ProfileRunnerId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Runs", x => x.RunId);
                     table.ForeignKey(
-                        name: "FK_Runs_Profiles_ProfileRunnerId",
-                        column: x => x.ProfileRunnerId,
+                        name: "FK_Runs_Profiles_RunnerId",
+                        column: x => x.RunnerId,
                         principalTable: "Profiles",
                         principalColumn: "RunnerId");
                 });
@@ -235,11 +251,11 @@ namespace Repository.Migrations
                 {
                     CommentId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     RunnerId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Message = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Message = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false),
                     DeletedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    PostId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                    PostId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -248,7 +264,34 @@ namespace Repository.Migrations
                         name: "FK_Comments_Posts_PostId",
                         column: x => x.PostId,
                         principalTable: "Posts",
-                        principalColumn: "PostId");
+                        principalColumn: "PostId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "RunRoutePoints",
+                columns: table => new
+                {
+                    RunRoutePointId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Latitude = table.Column<decimal>(type: "decimal(18,6)", precision: 18, scale: 6, nullable: false),
+                    Longitude = table.Column<decimal>(type: "decimal(18,6)", precision: 18, scale: 6, nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    RunId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    RunnerId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RunRoutePoints", x => x.RunRoutePointId);
+                    table.ForeignKey(
+                        name: "FK_RunRoutePoints_Runners_RunnerId",
+                        column: x => x.RunnerId,
+                        principalTable: "Runners",
+                        principalColumn: "RunnerId");
+                    table.ForeignKey(
+                        name: "FK_RunRoutePoints_Runs_RunId",
+                        column: x => x.RunId,
+                        principalTable: "Runs",
+                        principalColumn: "RunId");
                 });
 
             migrationBuilder.CreateTable(
@@ -258,8 +301,8 @@ namespace Repository.Migrations
                     LikeId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     RunnerId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CommentId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
-                    PostId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
+                    PostId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    CommentId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -290,6 +333,16 @@ namespace Repository.Migrations
                 name: "IX_Friends_ProfileRunnerId",
                 table: "Friends",
                 column: "ProfileRunnerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Friends_RequestFrom",
+                table: "Friends",
+                column: "RequestFrom");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Friends_RequestTo",
+                table: "Friends",
+                column: "RequestTo");
 
             migrationBuilder.CreateIndex(
                 name: "IX_GroupProfile_ProfilesRunnerId",
@@ -323,9 +376,19 @@ namespace Repository.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Runs_ProfileRunnerId",
+                name: "IX_RunRoutePoints_RunId",
+                table: "RunRoutePoints",
+                column: "RunId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RunRoutePoints_RunnerId",
+                table: "RunRoutePoints",
+                column: "RunnerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Runs_RunnerId",
                 table: "Runs",
-                column: "ProfileRunnerId");
+                column: "RunnerId");
         }
 
         /// <inheritdoc />
@@ -347,7 +410,7 @@ namespace Repository.Migrations
                 name: "Notifications");
 
             migrationBuilder.DropTable(
-                name: "Runs");
+                name: "RunRoutePoints");
 
             migrationBuilder.DropTable(
                 name: "Challenges");
@@ -357,6 +420,9 @@ namespace Repository.Migrations
 
             migrationBuilder.DropTable(
                 name: "Comments");
+
+            migrationBuilder.DropTable(
+                name: "Runs");
 
             migrationBuilder.DropTable(
                 name: "Posts");
