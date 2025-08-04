@@ -66,7 +66,7 @@ public class Program
         builder.Services.AddLogging();
         builder.Services.AddScoped<IRunner, RunnerRepository>();
         builder.Services.AddScoped<IAuthentication, AuthenticationRepository>();
-        builder.Services.AddScoped<IEmailService, EmailService>();
+        builder.Services.AddScoped<INotificationService,NotificationService>();
         builder.Services.AddScoped<IPeople, PeopleService>();
         builder.Services.AddScoped<IRun, RunService>();
         builder.Services.AddScoped<IPeopleHelper, PeopleHelpers>();
@@ -75,7 +75,6 @@ public class Program
         builder.Services.AddFluentValidationClientsideAdapters();
         builder.Services.AddValidatorsFromAssemblyContaining<RunnerValidation>();
         
-
         //Disable default model validation to use only FluentValidation
         builder.Services.Configure<ApiBehaviorOptions>(options =>
         {

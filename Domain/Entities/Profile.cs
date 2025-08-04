@@ -25,4 +25,5 @@ public class Profile
     public virtual ICollection<Post>? Posts { get; set; } =  new List<Post>();
     public virtual ICollection<Challenge>? Challenges { get; set; } = new List<Challenge>();
     public virtual ICollection<Group>? Groups { get; set; } = new List<Group>();
+    public virtual DeviceToken? DeviceToken { get; set; }
 }

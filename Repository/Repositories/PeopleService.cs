@@ -17,16 +17,16 @@ public class PeopleService : IPeople
     private readonly AppDbContext _dbContext;
     private readonly IMapper _mapper;
     private readonly IConfiguration _configuration;
-    private readonly IEmailService _emailService;
+    private readonly INotificationService _notification;
     private readonly IPeopleHelper _peopleHelper;
     
     public PeopleService(AppDbContext dbContext, IMapper mapper, IConfiguration configuration,
-        IEmailService emailService, IPeopleHelper peopleHelper)
+        INotificationService notification, IPeopleHelper peopleHelper)
     {
         _dbContext = dbContext;
         _mapper = mapper;
         _configuration = configuration;
-        _emailService = emailService;
+        _notification = notification;
         _peopleHelper = peopleHelper;
     }
 

@@ -23,14 +23,14 @@ public class AuthenticationRepository : IAuthentication
     private readonly AppDbContext _dbContext;
     private readonly IMapper _mapper;
     private readonly IConfiguration _configuration;
-    private readonly IEmailService _emailService;
+    private readonly INotificationService _notification;
     
-    public AuthenticationRepository(AppDbContext dbContext, IMapper mapper, IConfiguration configuration, IEmailService emailService)
+    public AuthenticationRepository(AppDbContext dbContext, IMapper mapper, IConfiguration configuration, INotificationService notificationService)
     {
         _dbContext = dbContext;
         _mapper = mapper;
         _configuration = configuration;
-        _emailService = emailService;
+        _notification =  notificationService;
     }
     
     public async Task<LoginResponse> CompleteProfile(CompleteProfileReq profileReq)
