@@ -6,9 +6,9 @@ using System.Text;
 using System.Threading.Tasks;
 using Domain.Entities;
 
-namespace Application.Models.Request.Groups
+namespace Application.Models.Request.Challenges
 {
-    public class CreateGroupRequest
+    public class CreateChallengeRequest
     {
         //public Guid GroupId { get; set; }
         [Required]

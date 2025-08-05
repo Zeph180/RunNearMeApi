@@ -5,7 +5,7 @@ namespace RunNearMe.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class GroupsController : ControllerBase
+    public class ChallengesController : ControllerBase
     {
         // GET: api/groups
         [HttpGet]

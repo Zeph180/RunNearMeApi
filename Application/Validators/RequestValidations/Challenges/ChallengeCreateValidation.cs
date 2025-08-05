@@ -3,15 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Application.Models.Request.Groups;
+using Application.Models.Request.Challenges;
 using Domain.Models.Request.Account;
 using FluentValidation;
 
-namespace Application.Validators.RequestValidations.Groups
+namespace Application.Validators.RequestValidations.Challenges
 {
-    public class GroupCreateValidation : AbstractValidator<CreateGroupRequest>
+    public class ChallengeCreateValidation : AbstractValidator<CreateChallengeRequest>
     {
-        public GroupCreateValidation() 
+        public ChallengeCreateValidation() 
         {
             RuleFor(x => x.Name)
                 .NotEmpty().WithMessage("Name is required")

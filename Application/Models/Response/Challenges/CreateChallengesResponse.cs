@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.Models.Response.Groups
+namespace Application.Models.Response.Challenges
 {
-    public class CreateGroupResponse
+    public class CreateChallengesResponse
     {
         public Guid GroupId { get; set; }
         public DateTime CreatedAt { get; set; }

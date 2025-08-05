@@ -4,14 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Application.Interfaces;
-using Application.Models.Request.Groups;
-using Application.Models.Response.Groups;
+using Application.Models.Request.Challenges;
+using Application.Models.Response.Challenges;
 
 namespace Repository.Repositories
 {
-    public  class GroupRepository : IGroup
+    public  class ChallengeRepository : IChallenge
     {
-        public Task<CreateGroupResponse> CreateGroup(CreateGroupRequest createGroupRequest)
+        public Task<CreateChallengesResponse> CreateChallenge(CreateChallengeRequest createGroupRequest)
         {
             // Implementation of group creation logic goes here
             throw new NotImplementedException();
