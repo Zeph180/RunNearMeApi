@@ -1,0 +1,7 @@
+﻿POST http://localhost:5133/api/authentication/Authentication/login
+Content-Type: application/json
+
+{
+	"email": "zeph@gmail.com",
+	"password": "string"
+}

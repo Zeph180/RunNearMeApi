@@ -109,6 +109,37 @@ namespace Repository.Migrations
                     b.ToTable("Comments");
                 });
 
+            modelBuilder.Entity("Domain.Entities.DeviceToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Platform")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("RunnerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DeviceTokens");
+                });
+
             modelBuilder.Entity("Domain.Entities.Friend", b =>
                 {
                     b.Property<Guid>("FriendId")
@@ -304,6 +335,9 @@ namespace Repository.Migrations
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<Guid?>("DeviceTokenId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<int>("Height")
                         .HasColumnType("int");
 
@@ -326,6 +360,8 @@ namespace Repository.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("RunnerId");
+
+                    b.HasIndex("DeviceTokenId");
 
                     b.ToTable("Profiles");
                 });
@@ -555,11 +591,17 @@ namespace Repository.Migrations
 
             modelBuilder.Entity("Domain.Entities.Profile", b =>
                 {
+                    b.HasOne("Domain.Entities.DeviceToken", "DeviceToken")
+                        .WithMany()
+                        .HasForeignKey("DeviceTokenId");
+
                     b.HasOne("Domain.Entities.Runner", "Runner")
                         .WithOne("Profile")
                         .HasForeignKey("Domain.Entities.Profile", "RunnerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("DeviceToken");
 
                     b.Navigation("Runner");
                 });

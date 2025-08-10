@@ -2,6 +2,7 @@ using System.Text;
 using Application.Exensions;
 using Application.Filters;
 using Application.Interfaces;
+using Application.Models.Request.PushNotification;
 using Application.Validators;
 using Domain.Entities;
 using FluentValidation;
@@ -24,8 +25,6 @@ public class Program
         var builder = WebApplication.CreateBuilder(args);
 
         builder.Logging.AddSeq();
-        // Add services to the container.
-       // builder.Services.AddAuthentication().AddJwtBearer();
         builder.Services.AddAuthorization();
         
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -70,6 +69,10 @@ public class Program
         builder.Services.AddScoped<IPeople, PeopleService>();
         builder.Services.AddScoped<IRun, RunService>();
         builder.Services.AddScoped<IPeopleHelper, PeopleHelpers>();
+        builder.Services.Configure<FirebaseConfig>(
+            builder.Configuration.GetSection("Firebase"));
+        builder.Services.AddScoped<IPushNotificationService, FirebasePushNotificationService>();
+        builder.Services.AddScoped<IDeviceTokenService, DeviceTokenService>();
         
         builder.Services.AddFluentValidationAutoValidation();
         builder.Services.AddFluentValidationClientsideAdapters();
@@ -87,7 +90,8 @@ public class Program
         if (app.Environment.IsDevelopment())
         {
             app.UseSwagger();
-            app.UseSwaggerUI();
+            app.UseSwaggerUI(
+                );
         }
 
         app.UseGlobalExceptionHandling();
