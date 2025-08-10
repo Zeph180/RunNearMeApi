@@ -152,10 +152,16 @@ public class FirebasePushNotificationService : IPushNotificationService
         };
     }
 
-    public async Task<bool> SubscribeToTopicAsync(List<string> deviceToken, string topic)
+    public async Task<bool> SubscribeToTopicAsync(SubscribeToTopicRequest request)
     {
-        var response = await _firebaseMessaging.SubscribeToTopicAsync(deviceToken, topic);
-        _logger.LogInformation($"Successfully subscribed {response.SuccessCount} to topic {topic}");
+        var deviceTokens = await _deviceTokenService.GetUserDeviceTokensAsync(request.UserId);;
+        if (deviceTokens.Count < 0)
+        {
+            _logger.LogInformation("Device token ID not found for {UserId}", request.UserId);
+            throw new KeyNotFoundException($"Device token ID not found for {request.UserId}");
+        }
+        var response = await _firebaseMessaging.SubscribeToTopicAsync(deviceTokens, request.Topic);
+        _logger.LogInformation("Successfully subscribed {response.SuccessCount} to topic {TopicName}",response.SuccessCount,  request.Topic);
         return response.SuccessCount > 0;
     }
 

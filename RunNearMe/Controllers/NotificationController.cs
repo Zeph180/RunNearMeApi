@@ -37,8 +37,17 @@ public class NotificationController : ControllerBase
         return Ok(ApiResponse<object>.SuccessResponse(response));
     }
 
+    [HttpPost("send-push-notification-to-user")]
     public async Task<IActionResult> SendPushNotificationToUser([FromBody] PushNotificationToUserRequest request)
     {
-        var response = _pushNotificationService.SendNotificationToUserAsync(request)
+        var response = await _pushNotificationService.SendNotificationToUserAsync(request);
+        return Ok(ApiResponse<object>.SuccessResponse(response));
+    }
+    
+    [HttpPost("subscribe-to-topic")]
+    public async Task<IActionResult> SubscribeToTopic([FromBody] SubscribeToTopicRequest request)
+    {
+        var response = await _pushNotificationService.SubscribeToTopicAsync(request);
+        return Ok(ApiResponse<object>.SuccessResponse(response));
     }
 }
