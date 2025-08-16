@@ -7,11 +7,9 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.18" />
       <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.7" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Models\Dtos\" />
+      <PackageReference Include="Seq.Extensions.Logging" Version="8.0.0" />
     </ItemGroup>
 
 </Project>

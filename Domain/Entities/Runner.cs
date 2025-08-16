@@ -5,26 +5,20 @@ namespace Domain.Entities;
 public class Runner
 {
     public required Guid RunnerId { get; set; }
+    [MaxLength(50)]
     public required string Name { get; set; }
-    public required string NickName { get; set; }
+    [MaxLength(20)]
     public required string Password { get; set; }
+    [MaxLength(50)]
     [EmailAddress]
     public required string Email { get; set; }
-    [Phone]
-    public required string PhoneNumber { get; set; }
-    public required string Address { get; set; }
-    public required string City { get; set; }
-    public required string State { get; set; }
-    [Range(14, 100)]
-    public int Age { get; set; }
-    [Range(10, 200)]
-    public int Height { get; set; }
-    [Range(10, 200)]
-    public int Weight { get; set; }
-    public Run[]? Runs { get; set; }
-    public Notification[]? Notifications { get; set; }
-    public Friend[]? Friends { get; set; }
-    public Post[]? Posts { get; set; }
-    public Challenge[]? Challenges { get; set; }
-    public Group[]? Groups { get; set; }
+    public Profile? Profile { get; set; }
+    public bool EmailConfirmed { get; set; }
+    [MaxLength(100)]
+    public string? EmailConfirmationToken { get; set; }
+    public DateTime TokenGeneratedAt { get; set; }
+    public DateTime TokenConfirmedAt { get; set; }
+    public List<RunRoutePoint>? RoutePoints { get; set; }
+    public ICollection<ChallengeParticipant> JoinedChallenges { get; set; } = new List<ChallengeParticipant>();
+
 }
