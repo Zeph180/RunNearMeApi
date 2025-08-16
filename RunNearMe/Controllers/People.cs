@@ -22,11 +22,13 @@ public class People : ControllerBase
    /// This returns all people available except the current user
    /// </summary>
    /// <param name="runnerId"></param>
+   /// <param name="pageSize"></param>
+   /// <param name="pageNumber"></param>
    /// <returns></returns>
-   [HttpGet("/get-people/{runnerId}")]
-   public async Task<IActionResult> GetPeople([FromRoute]Guid runnerId)
+   [HttpGet("/get-people/{runnerId}&pageSize={pageSize}&pageNumber={pageNumber}")]
+   public async Task<IActionResult> GetPeople([FromRoute]Guid runnerId, [FromQuery]int pageSize, [FromQuery]int pageNumber)
    {
-      var people = await _people.GetPeople(runnerId);
+      var people = await _people.GetPeople(runnerId, pageNumber, pageSize);
       return Ok(ApiResponse<object>.SuccessResponse(people));
    }
 
@@ -42,6 +44,11 @@ public class People : ControllerBase
       return Ok(ApiResponse<object>.SuccessResponse(person));
    }
 
+   /// <summary>
+   /// Sends a friend request
+   /// </summary>
+   /// <param name="request"></param>
+   /// <returns></returns>
    [HttpPost("request-friendship")]
    public async Task<IActionResult> SendFriendRequest([FromBody] GetPersonRequest request)
    {
@@ -49,6 +56,11 @@ public class People : ControllerBase
       return Ok(ApiResponse<object>.SuccessResponse(response));
    }
 
+   /// <summary>
+   /// Gets a single friend request 
+   /// </summary>
+   /// <param name="request"></param>
+   /// <returns></returns>
    [HttpPost("get-friend-request")]
    public async Task<IActionResult> GetFriendRequest([FromBody] GetFriendRequestRequest request)
    {
@@ -56,10 +68,30 @@ public class People : ControllerBase
       return Ok(ApiResponse<object>.SuccessResponse(response));
    }
 
-   [HttpGet("get-friend-requests/{runnerId}")]
-   public async Task<IActionResult> GetFriendRequests([FromRoute] Guid runnerId)
+   /// <summary>
+   /// Gets all friend requests of a particular user
+   /// </summary>
+   /// <param name="runnerId"></param>
+   /// <param name="pageSize"></param>
+   /// <param name="pageNumber"></param>
+   /// <returns></returns>
+   [HttpGet("get-friend-requests/{runnerId}&pageNumber={pageNumber}&pageSize={pageSize}")]
+   public async Task<IActionResult> GetFriendRequests([FromRoute] Guid runnerId, [FromQuery]int pageSize = 10, [FromQuery]int pageNumber = 1)
    {
-      var response = await _people.GetFriendRequests(runnerId);
+      var response = await _people.GetFriendRequests(runnerId, pageSize, pageNumber);
+      return Ok(ApiResponse<object>.SuccessResponse(response));
+   }
+   
+   /// <summary>
+   /// Used to update friend requests,
+   /// 'A' = Approve, D = Declined, I = Ignored, P = Pending, C = canceled, U = Unfriend
+   /// </summary>
+   /// <param name="request"></param>
+   /// <returns></returns>
+   [HttpPost("update-friend-request")]
+   public async Task<IActionResult> UpdateFriendRequest([FromBody] UpdateFriendShip request)
+   {
+      var response = await _people.UpdateFriendRequest(request);
       return Ok(ApiResponse<object>.SuccessResponse(response));
    }
 }

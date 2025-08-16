@@ -12,8 +12,8 @@ using Repository.Persistence;
 namespace Repository.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250728173325_SyncSchemaUpdate2")]
-    partial class SyncSchemaUpdate2
+    [Migration("20250802223251_addRunRoutePoints88t")]
+    partial class addRunRoutePoints88t
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -118,19 +118,33 @@ namespace Repository.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<bool>("Accepted")
-                        .HasColumnType("bit");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<Guid>("RunnerId")
+                    b.Property<Guid?>("ProfileRunnerId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid>("RequestFrom")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("RequestTo")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(1)
+                        .HasColumnType("nvarchar(1)");
+
                     b.HasKey("FriendId");
+
+                    b.HasIndex("ProfileRunnerId");
+
+                    b.HasIndex("RequestFrom");
+
+                    b.HasIndex("RequestTo");
 
                     b.ToTable("Friends");
                 });
@@ -358,6 +372,38 @@ namespace Repository.Migrations
                     b.ToTable("Runs");
                 });
 
+            modelBuilder.Entity("Domain.Entities.RunRoutePoint", b =>
+                {
+                    b.Property<Guid>("RunRoutePointId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Latitude")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<decimal>("Longitude")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<Guid?>("RunId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("RunnerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("RunRoutePointId");
+
+                    b.HasIndex("RunId");
+
+                    b.HasIndex("RunnerId");
+
+                    b.ToTable("RunRoutePoints");
+                });
+
             modelBuilder.Entity("Domain.Entities.Runner", b =>
                 {
                     b.Property<Guid>("RunnerId")
@@ -400,21 +446,6 @@ namespace Repository.Migrations
                     b.ToTable("Runners");
                 });
 
-            modelBuilder.Entity("FriendProfile", b =>
-                {
-                    b.Property<Guid>("FriendsFriendId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("ProfilesRunnerId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("FriendsFriendId", "ProfilesRunnerId");
-
-                    b.HasIndex("ProfilesRunnerId");
-
-                    b.ToTable("FriendProfile");
-                });
-
             modelBuilder.Entity("GroupProfile", b =>
                 {
                     b.Property<Guid>("GroupsGroupId")
@@ -454,6 +485,29 @@ namespace Repository.Migrations
                         .IsRequired();
 
                     b.Navigation("Post");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Friend", b =>
+                {
+                    b.HasOne("Domain.Entities.Profile", null)
+                        .WithMany("Friends")
+                        .HasForeignKey("ProfileRunnerId");
+
+                    b.HasOne("Domain.Entities.Profile", "RequestFromProfile")
+                        .WithMany()
+                        .HasForeignKey("RequestFrom")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Profile", "RequestToProfile")
+                        .WithMany()
+                        .HasForeignKey("RequestTo")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("RequestFromProfile");
+
+                    b.Navigation("RequestToProfile");
                 });
 
             modelBuilder.Entity("Domain.Entities.Like", b =>
@@ -505,25 +559,21 @@ namespace Repository.Migrations
                     b.HasOne("Domain.Entities.Profile", "Profile")
                         .WithMany("Runs")
                         .HasForeignKey("RunnerId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Profile");
                 });
 
-            modelBuilder.Entity("FriendProfile", b =>
+            modelBuilder.Entity("Domain.Entities.RunRoutePoint", b =>
                 {
-                    b.HasOne("Domain.Entities.Friend", null)
-                        .WithMany()
-                        .HasForeignKey("FriendsFriendId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.HasOne("Domain.Entities.Run", null)
+                        .WithMany("RoutePoints")
+                        .HasForeignKey("RunId");
 
-                    b.HasOne("Domain.Entities.Profile", null)
-                        .WithMany()
-                        .HasForeignKey("ProfilesRunnerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.HasOne("Domain.Entities.Runner", null)
+                        .WithMany("RoutePoints")
+                        .HasForeignKey("RunnerId");
                 });
 
             modelBuilder.Entity("GroupProfile", b =>
@@ -555,6 +605,8 @@ namespace Repository.Migrations
 
             modelBuilder.Entity("Domain.Entities.Profile", b =>
                 {
+                    b.Navigation("Friends");
+
                     b.Navigation("Notifications");
 
                     b.Navigation("Posts");
@@ -562,9 +614,16 @@ namespace Repository.Migrations
                     b.Navigation("Runs");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Run", b =>
+                {
+                    b.Navigation("RoutePoints");
+                });
+
             modelBuilder.Entity("Domain.Entities.Runner", b =>
                 {
                     b.Navigation("Profile");
+
+                    b.Navigation("RoutePoints");
                 });
 #pragma warning restore 612, 618
         }

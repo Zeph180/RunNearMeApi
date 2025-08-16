@@ -12,8 +12,8 @@ using Repository.Persistence;
 namespace Repository.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250728160921_fixMaxLength")]
-    partial class fixMaxLength
+    [Migration("20250802223526_addRunRoutePoints88tker")]
+    partial class addRunRoutePoints88tker
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -99,7 +99,7 @@ namespace Repository.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
-                    b.Property<Guid?>("PostId")
+                    b.Property<Guid>("PostId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("RunnerId")
@@ -118,9 +118,6 @@ namespace Repository.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<bool>("Accepted")
-                        .HasColumnType("bit");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -130,12 +127,24 @@ namespace Repository.Migrations
                     b.Property<Guid?>("ProfileRunnerId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("RunnerId")
+                    b.Property<Guid>("RequestFrom")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("RequestTo")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(1)
+                        .HasColumnType("nvarchar(1)");
 
                     b.HasKey("FriendId");
 
                     b.HasIndex("ProfileRunnerId");
+
+                    b.HasIndex("RequestFrom");
+
+                    b.HasIndex("RequestTo");
 
                     b.ToTable("Friends");
                 });
@@ -350,9 +359,6 @@ namespace Repository.Migrations
                     b.Property<double>("MaxPace")
                         .HasColumnType("float");
 
-                    b.Property<Guid?>("ProfileRunnerId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<Guid>("RunnerId")
                         .HasColumnType("uniqueidentifier");
 
@@ -361,9 +367,41 @@ namespace Repository.Migrations
 
                     b.HasKey("RunId");
 
-                    b.HasIndex("ProfileRunnerId");
+                    b.HasIndex("RunnerId");
 
                     b.ToTable("Runs");
+                });
+
+            modelBuilder.Entity("Domain.Entities.RunRoutePoint", b =>
+                {
+                    b.Property<Guid>("RunRoutePointId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Latitude")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<decimal>("Longitude")
+                        .HasPrecision(18, 6)
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<Guid?>("RunId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("RunnerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("RunRoutePointId");
+
+                    b.HasIndex("RunId");
+
+                    b.HasIndex("RunnerId");
+
+                    b.ToTable("RunRoutePoints");
                 });
 
             modelBuilder.Entity("Domain.Entities.Runner", b =>
@@ -440,9 +478,13 @@ namespace Repository.Migrations
 
             modelBuilder.Entity("Domain.Entities.Comment", b =>
                 {
-                    b.HasOne("Domain.Entities.Post", null)
+                    b.HasOne("Domain.Entities.Post", "Post")
                         .WithMany("Comments")
-                        .HasForeignKey("PostId");
+                        .HasForeignKey("PostId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Post");
                 });
 
             modelBuilder.Entity("Domain.Entities.Friend", b =>
@@ -450,17 +492,37 @@ namespace Repository.Migrations
                     b.HasOne("Domain.Entities.Profile", null)
                         .WithMany("Friends")
                         .HasForeignKey("ProfileRunnerId");
+
+                    b.HasOne("Domain.Entities.Profile", "RequestFromProfile")
+                        .WithMany()
+                        .HasForeignKey("RequestFrom")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Profile", "RequestToProfile")
+                        .WithMany()
+                        .HasForeignKey("RequestTo")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("RequestFromProfile");
+
+                    b.Navigation("RequestToProfile");
                 });
 
             modelBuilder.Entity("Domain.Entities.Like", b =>
                 {
-                    b.HasOne("Domain.Entities.Comment", null)
+                    b.HasOne("Domain.Entities.Comment", "Comment")
                         .WithMany("Likes")
                         .HasForeignKey("CommentId");
 
-                    b.HasOne("Domain.Entities.Post", null)
+                    b.HasOne("Domain.Entities.Post", "Post")
                         .WithMany("Likes")
                         .HasForeignKey("PostId");
+
+                    b.Navigation("Comment");
+
+                    b.Navigation("Post");
                 });
 
             modelBuilder.Entity("Domain.Entities.Notification", b =>
@@ -483,18 +545,35 @@ namespace Repository.Migrations
 
             modelBuilder.Entity("Domain.Entities.Profile", b =>
                 {
-                    b.HasOne("Domain.Entities.Runner", null)
+                    b.HasOne("Domain.Entities.Runner", "Runner")
                         .WithOne("Profile")
                         .HasForeignKey("Domain.Entities.Profile", "RunnerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Runner");
                 });
 
             modelBuilder.Entity("Domain.Entities.Run", b =>
                 {
-                    b.HasOne("Domain.Entities.Profile", null)
+                    b.HasOne("Domain.Entities.Profile", "Profile")
                         .WithMany("Runs")
-                        .HasForeignKey("ProfileRunnerId");
+                        .HasForeignKey("RunnerId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Profile");
+                });
+
+            modelBuilder.Entity("Domain.Entities.RunRoutePoint", b =>
+                {
+                    b.HasOne("Domain.Entities.Run", null)
+                        .WithMany("RoutePoints")
+                        .HasForeignKey("RunId");
+
+                    b.HasOne("Domain.Entities.Runner", null)
+                        .WithMany("RoutePoints")
+                        .HasForeignKey("RunnerId");
                 });
 
             modelBuilder.Entity("GroupProfile", b =>
@@ -535,9 +614,16 @@ namespace Repository.Migrations
                     b.Navigation("Runs");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Run", b =>
+                {
+                    b.Navigation("RoutePoints");
+                });
+
             modelBuilder.Entity("Domain.Entities.Runner", b =>
                 {
                     b.Navigation("Profile");
+
+                    b.Navigation("RoutePoints");
                 });
 #pragma warning restore 612, 618
         }
