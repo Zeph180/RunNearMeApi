@@ -18,4 +18,6 @@ public class Challenge
     public DateTime CreatedAt { get; set; }
     public bool IsDeleted { get; set; }
     public ICollection<Profile>? Profiles { get; set; }
+    public ICollection<ChallengeParticipant>? Participants { get; set; } = new List<ChallengeParticipant>();
+
 }

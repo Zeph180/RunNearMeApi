@@ -1,6 +1,8 @@
 ﻿using Application.Interfaces.Dtos;
 using Application.Interfaces.Dtos.Run;
 using Application.Models.Request.Authentication;
+using Application.Models.Request.Challenges;
+using Application.Models.Response.Challenges;
 using Application.Models.Response.People;
 using AutoMapper;
 using Domain.Entities;
@@ -88,5 +90,18 @@ public class MapperService : Profile
                 opt => opt.MapFrom(src => src.SequenceNumber))
             .ForMember(dest => dest.Timestamp,
                 opt => opt.MapFrom(src => src.Timestamp));
+
+        CreateMap<CreateChallengeRequest, Challenge>()
+            .ForMember(dest => dest.ChallengeId, opt => opt.Ignore())
+            .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+            .ForMember(dest => dest.IsDeleted, opt => opt.Ignore());
+            //.ForMember(dest => dest.Profiles, opt => opt.Ignore()); 
+
+        CreateMap<Challenge, CreateChallengesResponse>();
+
+        CreateMap<Challenge, GetChallengesResp>();
+
+        CreateMap<ChallengeParticipant, JoinChallengeResp>();
+
     }
 }

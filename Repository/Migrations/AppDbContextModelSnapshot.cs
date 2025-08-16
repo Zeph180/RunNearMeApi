@@ -77,6 +77,27 @@ namespace Repository.Migrations
                     b.ToTable("Challenges");
                 });
 
+            modelBuilder.Entity("Domain.Entities.ChallengeParticipant", b =>
+                {
+                    b.Property<Guid>("ChallengeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("RunnerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("Completed")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("JoinedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("ChallengeId", "RunnerId");
+
+                    b.HasIndex("RunnerId");
+
+                    b.ToTable("ChallengeParticipant");
+                });
+
             modelBuilder.Entity("Domain.Entities.Comment", b =>
                 {
                     b.Property<Guid>("CommentId")
@@ -486,6 +507,25 @@ namespace Repository.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Domain.Entities.ChallengeParticipant", b =>
+                {
+                    b.HasOne("Domain.Entities.Challenge", "Challenge")
+                        .WithMany("Participants")
+                        .HasForeignKey("ChallengeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Runner", "Runner")
+                        .WithMany("JoinedChallenges")
+                        .HasForeignKey("RunnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Challenge");
+
+                    b.Navigation("Runner");
+                });
+
             modelBuilder.Entity("Domain.Entities.Comment", b =>
                 {
                     b.HasOne("Domain.Entities.Post", "Post")
@@ -605,6 +645,11 @@ namespace Repository.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Domain.Entities.Challenge", b =>
+                {
+                    b.Navigation("Participants");
+                });
+
             modelBuilder.Entity("Domain.Entities.Comment", b =>
                 {
                     b.Navigation("Likes");
@@ -635,6 +680,8 @@ namespace Repository.Migrations
 
             modelBuilder.Entity("Domain.Entities.Runner", b =>
                 {
+                    b.Navigation("JoinedChallenges");
+
                     b.Navigation("Profile");
 
                     b.Navigation("RoutePoints");

@@ -8,7 +8,7 @@ namespace Application.Models.Response.Challenges
 {
     public class CreateChallengesResponse
     {
-        public Guid GroupId { get; set; }
+        public Guid ChallengeId { get; set; }
         public DateTime CreatedAt { get; set; }
         public  string Name { get; set; }
         public  string Description { get; set; }

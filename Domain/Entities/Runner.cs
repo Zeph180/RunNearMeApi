@@ -19,4 +19,6 @@ public class Runner
     public DateTime TokenGeneratedAt { get; set; }
     public DateTime TokenConfirmedAt { get; set; }
     public List<RunRoutePoint>? RoutePoints { get; set; }
+    public ICollection<ChallengeParticipant> JoinedChallenges { get; set; } = new List<ChallengeParticipant>();
+
 }

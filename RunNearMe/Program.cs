@@ -70,6 +70,7 @@ public class Program
         builder.Services.AddScoped<IPeople, PeopleService>();
         builder.Services.AddScoped<IRun, RunService>();
         builder.Services.AddScoped<IPeopleHelper, PeopleHelpers>();
+        builder.Services.AddScoped<IChallenge, ChallengeRepository>();
         
         builder.Services.AddFluentValidationAutoValidation();
         builder.Services.AddFluentValidationClientsideAdapters();

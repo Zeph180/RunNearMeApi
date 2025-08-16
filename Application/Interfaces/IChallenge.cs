@@ -11,5 +11,8 @@ namespace Application.Interfaces
     public interface IChallenge
     {
         Task<CreateChallengesResponse> CreateChallenge(CreateChallengeRequest createGroupRequest);
+        Task<GetChallengesResp> GetChallengeById(Guid challengeID);
+        Task<JoinChallengeResp> JoinChallenge(Guid challengeId, Guid RunnerId);
+
     }
 }

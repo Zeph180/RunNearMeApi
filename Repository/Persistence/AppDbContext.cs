@@ -60,6 +60,19 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<RunRoutePoint>()
             .Property(rrp => rrp.Longitude)
             .HasPrecision(18, 6);
+
+        modelBuilder.Entity<ChallengeParticipant>()
+        .HasKey(cp => new { cp.ChallengeId, cp.RunnerId }); // composite PK
+
+        modelBuilder.Entity<ChallengeParticipant>()
+            .HasOne(cp => cp.Challenge)
+            .WithMany(c => c.Participants)
+            .HasForeignKey(cp => cp.ChallengeId);
+
+        modelBuilder.Entity<ChallengeParticipant>()
+            .HasOne(cp => cp.Runner)
+            .WithMany(r => r.JoinedChallenges)
+            .HasForeignKey(cp => cp.RunnerId);
     }
 
     public DbSet<Runner> Runners { get; set; }
@@ -73,4 +86,6 @@ public class AppDbContext : DbContext
     public DbSet<Challenge> Challenges { get; set; }
     public DbSet<Group> Groups { get; set; }
     public DbSet<RunRoutePoint> RunRoutePoints { get; set; }
+    public DbSet<ChallengeParticipant> ChallengeParticipant { get; set; }
+
 }
