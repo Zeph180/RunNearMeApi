@@ -9,9 +9,9 @@ using Domain.Entities;
 using Domain.Models.Request.Account;
 using Domain.Models.Request.Authentication;
 using Domain.Models.Response;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Repository.Persistence;
 using Profile = Domain.Entities.Profile;
@@ -24,13 +24,19 @@ public class AuthenticationRepository : IAuthentication
     private readonly IMapper _mapper;
     private readonly IConfiguration _configuration;
     private readonly INotificationService _notification;
+    private readonly ILogger<AuthenticationRepository> _logger;
+    private readonly IRunner _runnerRepository;
     
-    public AuthenticationRepository(AppDbContext dbContext, IMapper mapper, IConfiguration configuration, INotificationService notificationService)
+    public AuthenticationRepository(AppDbContext dbContext, IMapper mapper, 
+        IConfiguration configuration, INotificationService notificationService, 
+        ILogger<AuthenticationRepository> logger, IRunner runnerRepository)
     {
         _dbContext = dbContext;
         _mapper = mapper;
         _configuration = configuration;
         _notification =  notificationService;
+        _logger = logger;
+        _runnerRepository = runnerRepository;
     }
     
     public async Task<LoginResponse> CompleteProfile(CompleteProfileReq profileReq)
@@ -77,7 +83,9 @@ public class AuthenticationRepository : IAuthentication
 
     public async Task<LoginResponse> Login(LoginRequest request)
     {
-        var user = _dbContext.Runners.SingleOrDefault(r => r.Email == request.Email && r.Password == request.Password);;
+        var user = request.IsThirdParty 
+            ? _dbContext.Runners.SingleOrDefault(r => r.Email == request.Email) 
+            : _dbContext.Runners.SingleOrDefault(r => r.Email == request.Email && r.Password == request.Password);
 
         if (user == null)
         {
@@ -97,6 +105,35 @@ public class AuthenticationRepository : IAuthentication
             Account = profile != null ? _mapper.Map<Runner, CreateAccountResponse>(user) : null,
             Profile = profile
         };
+    }
+
+    public async Task<LoginResponse> LoginWithGoogle(AccountCreateRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Starting Login with google for {Email}", request.Email);
+            _logger.LogInformation("Going to db to find existing profile for {Email}", request.Email);
+           var runner = await _dbContext.Runners.FirstOrDefaultAsync(r => r.Email == request.Email);
+           if (runner == null)
+           {
+               _logger.LogInformation("No existing profile found for {Email}, creating new profile", request.Email);
+              var newRunner = await _runnerRepository.CreateAccount(request);
+              _logger.LogInformation("New profile created for {Email}", request.Email);
+           }
+
+           var loginReq = new LoginRequest
+           {
+               Email = request.Email,
+               Password = request.Password,
+               IsThirdParty = true
+           };
+           return await Login(loginReq);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError("An exception occured during Login with google for {Email}, {Message}", request.Email, e.Message);
+            throw;
+        }
     }
 
     private async Task<string> GenerateJwtToken(Runner runner)

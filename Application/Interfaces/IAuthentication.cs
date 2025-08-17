@@ -12,5 +12,6 @@ public interface IAuthentication
 {
     Task<CreateAccountResponse> CreateAccount(AccountCreateRequest request);
     Task<LoginResponse> Login(LoginRequest request);
+    Task<LoginResponse> LoginWithGoogle(AccountCreateRequest request);
     Task<LoginResponse> CompleteProfile(CompleteProfileReq user);
 }

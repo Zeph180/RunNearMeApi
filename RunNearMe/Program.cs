@@ -20,6 +20,7 @@ using Repository.Repositories;
 using Repository.Repositories.Helpers;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
 
 namespace RunNearMe;
 
@@ -93,6 +94,27 @@ public class Program
                 options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 // options.CallbackPath = "/api/Authentication/google-callback";
                 options.CallbackPath = "/signin-google";
+                
+                // Request additional scopes
+                options.Scope.Clear(); // Clear default scopes first
+                options.Scope.Add("openid");
+                options.Scope.Add("profile");
+                options.Scope.Add("email");
+        
+                // Add additional scopes as needed
+                options.Scope.Add("https://www.googleapis.com/auth/user.birthday.read");
+                options.Scope.Add("https://www.googleapis.com/auth/user.gender.read");
+                options.Scope.Add("https://www.googleapis.com/auth/user.phonenumbers.read");
+                options.Scope.Add("https://www.googleapis.com/auth/user.addresses.read");
+        
+                // Map additional claims
+                options.ClaimActions.MapJsonKey("birthday", "birthday");
+                options.ClaimActions.MapJsonKey("gender", "gender");
+                options.ClaimActions.MapJsonKey("phone_number", "phone_number");
+                options.ClaimActions.MapJsonKey("address", "address");
+                options.ClaimActions.MapJsonKey("locale", "locale");
+                options.ClaimActions.MapJsonKey("email_verified", "email_verified");
+                
                 options.SaveTokens = true;
             })
             .AddJwtBearer(options =>

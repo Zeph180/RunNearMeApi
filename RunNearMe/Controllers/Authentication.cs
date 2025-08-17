@@ -1,4 +1,5 @@
-﻿using Application.Interfaces;
+﻿using System.Security.Claims;
+using Application.Interfaces;
 using Application.Models.Request.Authentication;
 using Application.Wrappers;
 using Domain.Entities;
@@ -95,14 +96,6 @@ public class Authentication : ControllerBase
         };
     
         return Challenge(properties, GoogleDefaults.AuthenticationScheme);
-        // var properties = new AuthenticationProperties
-        // {
-        //     RedirectUri = Url.Action(nameof(GoogleCallBack), "Authentication", null, Request.Scheme),
-        //     Items = { { "LoginProvider", GoogleDefaults.AuthenticationScheme } }
-        //
-        // };
-        //
-        // return Challenge(properties, GoogleDefaults.AuthenticationScheme);
     }
     
 
@@ -115,6 +108,19 @@ public class Authentication : ControllerBase
         {
             return BadRequest(ApiResponse<object>.FailResponse("Google authentication failed"));
         }
+        
+        var googleUser = result.Principal;
+        var email = googleUser.FindFirst(ClaimTypes.Email)?.Value ?? googleUser.FindFirst("emailaddress")?.Value;
+        var name = googleUser.FindFirst(ClaimTypes.Name)?.Value ?? googleUser.FindFirst("name")?.Value;
+        
+        var user = new AccountCreateRequest
+        {
+            Email = email,
+            Name = name,
+            Password = "N/A"
+        };
+        
+         await _authentication.LoginWithGoogle(user);
 
         return Ok(ApiResponse<object>.SuccessResponse(result));
     }
