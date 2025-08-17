@@ -1,23 +1,35 @@
 ﻿using Application.Interfaces;
 using Application.Models.Request.Authentication;
 using Application.Wrappers;
+using Domain.Entities;
 using Domain.Models.Request.Account;
 using Domain.Models.Request.Authentication;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace RunNearMe.Controllers;
 
-[Route("api/authentication/[controller]")]
+[Route("api/[controller]")]
 [ApiController]
 [Authorize]
 public class Authentication : ControllerBase
 {
     private readonly IAuthentication _authentication;
-    
-    public Authentication(IAuthentication authentication)
+    private readonly ILogger<Authentication> _logger;
+    private readonly IConfiguration _configuration;
+    private readonly LinkGenerator _linkGenerator;
+
+    public Authentication(
+        IAuthentication authentication, ILogger<Authentication> logger, 
+        IConfiguration configuration, LinkGenerator linkGenerator)
     {
         _authentication = authentication;
+        _logger = logger;
+        _configuration = configuration;
+        _linkGenerator = linkGenerator;
     }
 
     /// <summary>
@@ -45,7 +57,7 @@ public class Authentication : ControllerBase
         var response = await _authentication.Login(request);
         return Ok(ApiResponse<object>.SuccessResponse(response));
     }
-    
+
     /// <summary>
     /// This is responsible for completing the user profile
     /// </summary>
@@ -56,5 +68,54 @@ public class Authentication : ControllerBase
     {
         var response = await _authentication.CompleteProfile(request);
         return Ok(ApiResponse<object>.SuccessResponse(response));
+    }
+    
+    [HttpGet("login-google")]
+    [AllowAnonymous]
+    public IActionResult Login([FromQuery] string returnUrl = "/")
+    {
+        // Clear any existing authentication cookies first
+        Response.Cookies.Delete("RunNearMe.GoogleCorrelation");
+        Response.Cookies.Delete(".AspNetCore.Correlation.Google");
+    
+        // Store return URL in session for later use
+        HttpContext.Session.SetString("ReturnUrl", returnUrl);
+        HttpContext.Session.SetString("AuthState", Guid.NewGuid().ToString());
+    
+        var properties = new AuthenticationProperties
+        {
+            RedirectUri = $"{Request.Scheme}://{Request.Host}/api/Authentication/google-callback",
+            AllowRefresh = true,
+            ExpiresUtc = DateTimeOffset.UtcNow.AddMinutes(15),
+            Items = 
+            { 
+                { "LoginProvider", GoogleDefaults.AuthenticationScheme },
+                { "scheme", GoogleDefaults.AuthenticationScheme }
+            }
+        };
+    
+        return Challenge(properties, GoogleDefaults.AuthenticationScheme);
+        // var properties = new AuthenticationProperties
+        // {
+        //     RedirectUri = Url.Action(nameof(GoogleCallBack), "Authentication", null, Request.Scheme),
+        //     Items = { { "LoginProvider", GoogleDefaults.AuthenticationScheme } }
+        //
+        // };
+        //
+        // return Challenge(properties, GoogleDefaults.AuthenticationScheme);
+    }
+    
+
+    [HttpGet("google-callback")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GoogleCallBack()
+    {
+        var result = await HttpContext.AuthenticateAsync(GoogleDefaults.AuthenticationScheme);
+        if (!result.Succeeded)
+        {
+            return BadRequest(ApiResponse<object>.FailResponse("Google authentication failed"));
+        }
+
+        return Ok(ApiResponse<object>.SuccessResponse(result));
     }
 }
