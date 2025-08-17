@@ -91,7 +91,8 @@ public class Program
                 options.ClientId = clientId;
                 options.ClientSecret = clientSecret;
                 options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-                options.CallbackPath = "/api/Authentication/google-callback";
+                // options.CallbackPath = "/api/Authentication/google-callback";
+                options.CallbackPath = "/signin-google";
                 options.SaveTokens = true;
             })
             .AddJwtBearer(options =>
