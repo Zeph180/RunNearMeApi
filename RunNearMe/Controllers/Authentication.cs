@@ -120,8 +120,8 @@ public class Authentication : ControllerBase
             Password = "N/A"
         };
         
-         await _authentication.LoginWithGoogle(user);
+        var loginResponse = await _authentication.LoginWithGoogle(user);
 
-        return Ok(ApiResponse<object>.SuccessResponse(result));
+        return Ok(ApiResponse<object>.SuccessResponse(loginResponse));
     }
 }

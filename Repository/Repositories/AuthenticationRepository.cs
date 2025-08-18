@@ -98,11 +98,22 @@ public class AuthenticationRepository : IAuthentication
         
         var token = await GenerateJwtToken(user);
         var profile = await _dbContext.Profiles.AsNoTracking().FirstOrDefaultAsync(u => u.RunnerId == user.RunnerId);
-
+        var account = profile != null ? _mapper.Map<Runner, CreateAccountResponse>(user) : null;
+        
+        if (request.IsThirdParty)
+        {
+            account = new CreateAccountResponse
+            {
+                Email = user.Email,
+                Name = user.Name,
+                RunnerId = user.RunnerId,
+            };
+        }
+        
         return new LoginResponse
         {
             Token = token,
-            Account = profile != null ? _mapper.Map<Runner, CreateAccountResponse>(user) : null,
+            Account = account,
             Profile = profile
         };
     }
