@@ -2,5 +2,6 @@
 
 public class ChallengeJoinRequest
 {
-    
+    public Guid ChallengeId { get; set; }
+    public Guid RunnerId { get; set; }
 }

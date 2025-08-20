@@ -16,9 +16,9 @@ public class PeopleHelpers : IPeopleHelper
 {
     private readonly AppDbContext _dbContext;
     private readonly IConfiguration _configuration;
-    private readonly ILogger<IPeopleHelper> _logger;
+    private readonly ILogger<PeopleHelpers> _logger;
 
-    public PeopleHelpers(AppDbContext dbContext, IConfiguration configuration, Logger<IPeopleHelper> logger)
+    public PeopleHelpers(AppDbContext dbContext, IConfiguration configuration, ILogger<PeopleHelpers> logger)
     {
         _dbContext = dbContext;
         _configuration = configuration;

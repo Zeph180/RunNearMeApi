@@ -24,15 +24,15 @@ namespace Repository.Migrations
 
             modelBuilder.Entity("ChallengeProfile", b =>
                 {
+                    b.Property<Guid>("ChallengersRunnerId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid>("ChallengesChallengeId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("ProfilesRunnerId")
-                        .HasColumnType("uniqueidentifier");
+                    b.HasKey("ChallengersRunnerId", "ChallengesChallengeId");
 
-                    b.HasKey("ChallengesChallengeId", "ProfilesRunnerId");
-
-                    b.HasIndex("ProfilesRunnerId");
+                    b.HasIndex("ChallengesChallengeId");
 
                     b.ToTable("ChallengeProfile");
                 });
@@ -51,6 +51,9 @@ namespace Repository.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<DateTime>("EndsAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("ImageUrl")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -63,6 +66,11 @@ namespace Repository.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("PushTopic")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<Guid>("RunnerId")
                         .HasColumnType("uniqueidentifier");
@@ -514,15 +522,15 @@ namespace Repository.Migrations
 
             modelBuilder.Entity("ChallengeProfile", b =>
                 {
-                    b.HasOne("Domain.Entities.Challenge", null)
+                    b.HasOne("Domain.Entities.Profile", null)
                         .WithMany()
-                        .HasForeignKey("ChallengesChallengeId")
+                        .HasForeignKey("ChallengersRunnerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Domain.Entities.Profile", null)
+                    b.HasOne("Domain.Entities.Challenge", null)
                         .WithMany()
-                        .HasForeignKey("ProfilesRunnerId")
+                        .HasForeignKey("ChallengesChallengeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

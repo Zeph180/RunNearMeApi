@@ -145,6 +145,7 @@ public class Program
         builder.Services.AddScoped<IPeople, PeopleService>();
         builder.Services.AddScoped<IRun, RunService>();
         builder.Services.AddScoped<IPeopleHelper, PeopleHelpers>();
+        builder.Services.AddScoped<IChallengeService, ChallengeService>();
         builder.Services.Configure<FirebaseConfig>(
             builder.Configuration.GetSection("Firebase"));
         builder.Services.AddScoped<IPushNotificationService, FirebasePushNotificationService>();
@@ -169,6 +170,8 @@ public class Program
             app.UseSwaggerUI();
             app.UseDeveloperExceptionPage();
         }
+
+        app.UseGlobalExceptionHandling();
 
         app.UseHttpsRedirection();
 

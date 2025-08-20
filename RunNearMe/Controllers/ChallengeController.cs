@@ -1,12 +1,28 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Application.Interfaces;
+using Application.Models.Request.Challenge;
+using Application.Wrappers;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace RunNearMe.Controllers;
-
-public class ChallengeController : Controller
+[Route("api/{controller}")]
+[ApiController]
+public class ChallengeController : ControllerBase
 {
-    // GET
-    public IActionResult Index()
+    private readonly ILogger<ChallengeController> _logger;
+    private readonly IChallengeService _challengeService;
+    
+    public ChallengeController(ILogger<ChallengeController> logger, IChallengeService challengeService)
     {
-        return View();
+        _logger = logger;
+        _challengeService = challengeService;
+    }
+
+    [HttpPost("/create-challenge")]
+    public async Task<IActionResult> CreateChallenge([FromBody] CreateChallengeRequest request)
+    {
+        _logger.LogInformation("Creating challenge");
+        var result = await _challengeService.CreateChallenge(request);
+        return Ok(ApiResponse<object>.SuccessResponse(result));
     }
 }
