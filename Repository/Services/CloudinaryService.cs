@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace Repository.Repositories;
+namespace Repository.Services;
 
 public class CloudinaryService : ICloudinaryService
 {
@@ -94,19 +94,19 @@ public class CloudinaryService : ICloudinaryService
         }
     }
 
-    public async Task<FileUploadResponse> UploadImageAsync(IFormFile image, string? folder = null, string? publicId = null)
+    public async Task<FileUploadResponse> UploadImageAsync(ImageUploadRequest requestData)
     {
         var request = new FileUploadRequest
         {
-            File = image,
-            Folder = folder,
-            PublicId = publicId,
+            File = requestData.Image,
+            Folder = requestData.Folder,
+            PublicId = requestData.PublicId,
             UseFilename = true,
             UniqueFilename = true,
             Tags = new List<string> { "image" },
             Context = new Dictionary<string, string> { { "type", "image" } }
         };
-        return await UploadFileAsync(image, request);
+        return await UploadFileAsync(requestData.Image, request);
     }
 
     public async Task<bool> DeleteFileAsync(string publicId, string? resourceType = null)

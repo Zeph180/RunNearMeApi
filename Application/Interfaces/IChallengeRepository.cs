@@ -3,7 +3,7 @@ using Application.Models.Request.Challenge;
 
 namespace Application.Interfaces;
 
-public interface IChallengeService
+public interface IChallengeRepository
 {
     Task<ChallengeDto> CreateChallenge(CreateChallengeRequest request);
     Task<ChallengeDto> DeleteChallenge(CreateChallengeRequest request);

@@ -25,6 +25,7 @@ using Application.Services;
 using CloudinaryDotNet;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http.Features;
+using Repository.Services;
 
 namespace RunNearMe;
 
@@ -167,7 +168,7 @@ public class Program
         builder.Services.AddScoped<IPeople, PeopleService>();
         builder.Services.AddScoped<IRun, RunService>();
         builder.Services.AddScoped<IPeopleHelper, PeopleHelpers>();
-        builder.Services.AddScoped<IChallengeService, ChallengeService>();
+        builder.Services.AddScoped<IChallengeRepository, ChallengeRepository>();
         builder.Services.Configure<FirebaseConfig>(
             builder.Configuration.GetSection("Firebase"));
         builder.Services.AddScoped<IPushNotificationService, FirebasePushNotificationService>();

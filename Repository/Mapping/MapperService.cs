@@ -30,7 +30,6 @@ public class MapperService : Profile
             .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
             .ForMember(dest => dest.Target, opt => opt.MapFrom(src => src.Target))
             .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description))
-            .ForMember(dest => dest.ImageUrl, opt => opt.MapFrom(src => src.ImageUrl))
             .ForMember(dest => dest.EndsAt, opt => opt.MapFrom(src => src.EndsAt));
             
         CreateMap<Runner, RunnerDto>();

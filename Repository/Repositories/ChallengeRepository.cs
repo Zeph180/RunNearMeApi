@@ -1,6 +1,10 @@
-﻿using Application.Interfaces;
+﻿using Application.Errors;
+using Application.Interfaces;
 using Application.Interfaces.Dtos.Challenge;
+using Application.Middlewares.ErrorHandling;
 using Application.Models.Request.Challenge;
+using Application.Models.Request.Cloudinary;
+using Application.Services;
 using AutoMapper;
 using Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
@@ -9,19 +13,24 @@ using Repository.Persistence;
 
 namespace Repository.Repositories;
 
-public class ChallengeService : IChallengeService
+public class ChallengeRepository : IChallengeRepository
 {
     private readonly AppDbContext _dbContext;
     private readonly IMapper _mapper;
     private readonly IPeopleHelper _peopleHelper;
-    private readonly ILogger<ChallengeService> _logger;
+    private readonly ILogger<ChallengeRepository> _logger;
+    private readonly ICloudinaryService _cloudinaryService;
     
-    public ChallengeService(AppDbContext dbContext, IMapper mapper, IPeopleHelper peopleHelper, ILogger<ChallengeService> logger)
+    public ChallengeRepository(
+        AppDbContext dbContext, IMapper mapper, 
+        IPeopleHelper peopleHelper, ILogger<ChallengeRepository> logger, 
+        ICloudinaryService cloudinaryService)
     {
         _dbContext = dbContext;
         _mapper = mapper;
         _peopleHelper = peopleHelper;
         _logger = logger;
+        _cloudinaryService = cloudinaryService;
     }
     
     public async Task<ChallengeDto> CreateChallenge(CreateChallengeRequest request)
@@ -29,10 +38,31 @@ public class ChallengeService : IChallengeService
         try
         {
             _logger.LogInformation("Starting to create challenge");
-            await _peopleHelper.GetValidProfileAsync(request.RunnerId, "USER_NOT_ALLOWED",
+           var runner = await _peopleHelper.GetValidProfileAsync(request.RunnerId, "USER_NOT_ALLOWED",
                 "You are not allowed to access this resource.");
+
+           var imageDetails = new ImageUploadRequest
+           {
+               Image = request.ChallengeArt,
+               Folder = "ChallengeArts",
+               PublicId = runner.RunnerId.ToString()
+           };
+            var fileUploadResponse = await _cloudinaryService.UploadImageAsync(imageDetails);
+
+            if (fileUploadResponse == null)
+            {
+                _logger.LogError("Failed to upload challenge art for {runnerId}",  request.RunnerId);
+                throw new BusinessException(ErrorMessages.FileUploadFailed, ErrorCodes.FileUploadFailed);
+            }
+
+            if (!fileUploadResponse.Success)
+            {
+                _logger.LogError("Failed to upload challenge art for {runnerId} : {ErrorMessage}",  request.RunnerId,  fileUploadResponse.ErrorMessage);
+                throw new BusinessException(fileUploadResponse.ErrorMessage, ErrorCodes.FileUploadFailed);
+            }
             
             var challenge = _mapper.Map<CreateChallengeRequest, Challenge>(request);
+            challenge.ImageUrl = fileUploadResponse.Url;
             challenge.PushTopic = GenerateUniqueTopic(request.Name);
            
             _dbContext.Challenges.Add(challenge);

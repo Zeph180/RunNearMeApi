@@ -12,13 +12,13 @@ namespace RunNearMe.Controllers;
 public class ChallengeController : ControllerBase
 {
     private readonly ILogger<ChallengeController> _logger;
-    private readonly IChallengeService _challengeService;
+    private readonly IChallengeRepository _challengeRepository;
     private readonly ICloudinaryService _cloudinaryService;
     
-    public ChallengeController(ILogger<ChallengeController> logger, IChallengeService challengeService, ICloudinaryService _cloudinaryService)
+    public ChallengeController(ILogger<ChallengeController> logger, IChallengeRepository challengeRepository, ICloudinaryService _cloudinaryService)
     {
         _logger = logger;
-        _challengeService = challengeService;
+        _challengeRepository = challengeRepository;
         this._cloudinaryService = _cloudinaryService;
     }
 
@@ -32,15 +32,15 @@ public class ChallengeController : ControllerBase
     [HttpPost("/upload-image")]
     public async Task<IActionResult> UploadImage([FromForm] ImageUploadRequest request)
     {
-        var response = await _cloudinaryService.UploadImageAsync(request.Image, request.Folder, request.PublicId);
+        var response = await _cloudinaryService.UploadImageAsync(request);
         return Ok(ApiResponse<object>.SuccessResponse(response));
     }
 
     [HttpPost("/create-challenge")]
-    public async Task<IActionResult> CreateChallenge([FromBody] CreateChallengeRequest request)
+    public async Task<IActionResult> CreateChallenge([FromForm] CreateChallengeRequest request)
     {
         _logger.LogInformation("Creating challenge");
-        var result = await _challengeService.CreateChallenge(request);
+        var result = await _challengeRepository.CreateChallenge(request);
         return Ok(ApiResponse<object>.SuccessResponse(result));
     }
 }
