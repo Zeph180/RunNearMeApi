@@ -8,4 +8,6 @@ public interface ICloudinaryService
 {
     Task<FileUploadResponse> UploadFileAsync(IFormFile file, FileUploadRequest request);
     Task<FileUploadResponse> UploadImageAsync(IFormFile image, string? folder = null, string? publicId = null);
+    Task<bool> DeleteFileAsync(string publicId, string? resourceType = null);
+    
 }

@@ -109,6 +109,27 @@ public class CloudinaryService : ICloudinaryService
         return await UploadFileAsync(image, request);
     }
 
+    public async Task<bool> DeleteFileAsync(string publicId, string? resourceType = null)
+    {
+        try
+        {
+            _logger.LogInformation("Starting to delete file");
+            var deleteParams = new DeletionParams(publicId)
+            {
+                ResourceType = ResourceType.Image
+            };
+            
+            _logger.LogInformation("Deleting file from cloudinary");
+            var result = await _cloudinary.DestroyAsync(deleteParams);
+            return result.Result == "ok";
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error deleting file from cloudinary : {publicId}", publicId);;
+            throw new Exception("Error deleting file from cloudinary", e);
+        }
+    }
+
     private static RawUploadParams CreateUploadParams(IFormFile file, FileUploadRequest request)
     {
         var uploadParams = new RawUploadParams()
