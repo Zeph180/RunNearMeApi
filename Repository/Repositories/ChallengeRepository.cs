@@ -157,7 +157,35 @@ public class ChallengeRepository : IChallengeRepository
 
     public async Task<ChallengeDto> ExitChallenge(ChallengeJoinRequest request)
     {
-        throw new NotImplementedException();
+        try
+        {
+            _logger.LogInformation("Starting to exit challenge {ChallengeId} {Runner}", request.ChallengeId, request.RunnerId);
+            var challenge = await GetChallengeAsync(request.ChallengeId);
+            if (challenge == null)
+            {
+                _logger.LogWarning("Challenge not found. RunnerId: {RunnerId}, ChallengeId: {ChallengeId}", request.RunnerId, request.ChallengeId);
+                throw new BusinessException(ErrorMessages.ResourceNotFound, ErrorCodes.PersonNotFound);
+            }
+            
+            var alreadyJoined = challenge?.Challengers?.Any(r => r.RunnerId == request.RunnerId);
+            if (!alreadyJoined.HasValue)
+            {
+                _logger.LogInformation("Runner not joined the challenge. {RunnerId}, {ChallengeId}", request.RunnerId, request.ChallengeId);
+                throw new BusinessException("Runner not joined this challenge", ErrorCodes.ActionNotAllowed);
+            }
+            
+            _logger.LogInformation("Runner exiting the challenge. {RunnerId}, {ChallengeId}", request.RunnerId, request.ChallengeId);
+            var challenger = await _peopleHelper.GetValidProfileAsync(request.RunnerId, "PROFILE_NOT_FOUND", "Profile not found");
+            challenge?.Challengers?.Remove(challenger);
+            await _dbContext.SaveChangesAsync();   
+            _logger.LogInformation("Runner exited the challenge. {RunnerId}, {ChallengeId}", request.RunnerId, request.ChallengeId);
+            return _mapper.Map<Challenge, ChallengeDto>(challenge);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error exiting challenge {ChallengeId} {Runner}", request.ChallengeId, request.RunnerId);
+            throw new BusinessException(ErrorMessages.UnHandledException, ErrorCodes.UnHandledException);
+        }
     }
     
     private async Task<Challenge?> GetChallengeAsync(Guid challengeId) {
