@@ -12,4 +12,5 @@ public class ErrorMessages
     public const string ResourceAlreadyExists = "Resource already exists.";
     public const string NullFile = "File can not be null.";
     public const string FileUploadFailed = "File upload failed.";
+    public const string UnHandledException = "An unhandled exception occurred.";
 }

@@ -10,4 +10,5 @@ public class ErrorCodes
     public const string ResourceAlreadyExists = "RESOURCE_ALREADY_EXISTS";
     public const string NullFile = "NULL_FILE";
     public const string FileUploadFailed = "FILE_UPLOAD_FAILED";
+    public const string UnHandledException = "UNHANDLED_EXCEPTION";
 }
