@@ -152,7 +152,7 @@ public class CloudinaryService : ICloudinaryService
         // if (request.Context != null && request.Context.Any())
         //     uploadParams.Context = request.Context;
         
-        //Set resource type base on file content type
+        //Set resource type base on a file content type
         if (IsImageFile(file.ContentType))
         {
             var imageParams = new ImageUploadParams()
