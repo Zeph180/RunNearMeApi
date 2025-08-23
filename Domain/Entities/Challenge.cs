@@ -15,7 +15,10 @@ public class Challenge
     [MaxLength(100)]
     [Url]
     public required string ImageUrl { get; set; }
+    [MaxLength(100)]
+    public required string PushTopic { get; set; }
     public DateTime CreatedAt { get; set; }
+    public DateTime EndsAt { get; set; }
     public bool IsDeleted { get; set; }
-    public ICollection<Profile>? Profiles { get; set; }
+    public ICollection<Profile>? Challengers { get; set; }
 }

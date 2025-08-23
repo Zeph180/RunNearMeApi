@@ -1,0 +1,229 @@
+﻿using Application.Errors;
+using Application.Interfaces;
+using Application.Interfaces.Dtos.PushNotifications;
+using Application.Middlewares.ErrorHandling;
+using Application.Models.Request.PushNotification;
+using Application.Models.Response;
+using FirebaseAdmin;
+using FirebaseAdmin.Messaging;
+using Google.Apis.Auth.OAuth2;
+using Google.Cloud.Storage.V1;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+
+namespace Repository.Repositories;
+
+public class FirebasePushNotificationService : IPushNotificationService
+{
+    private readonly FirebaseMessaging _firebaseMessaging;
+    private readonly ILogger<FirebasePushNotificationService> _logger;
+    private readonly IDeviceTokenService _deviceTokenService;
+    private readonly string _bucketName = "your-project-id.appspot.com";
+    private readonly IConfiguration _configuration;
+    
+    public FirebasePushNotificationService( IOptions<FirebaseConfig> _firebaseConfig,
+        ILogger<FirebasePushNotificationService> logger, IDeviceTokenService deviceTokenService, IConfiguration configuration)
+    {
+        _logger = logger;
+        _deviceTokenService = deviceTokenService;
+        _configuration = configuration;
+        
+        try
+        {
+            if (FirebaseApp.DefaultInstance == null)
+            {
+                var credentials = GoogleCredential.FromFile(_firebaseConfig.Value.ServiceAccountKeyPath);
+                FirebaseApp.Create(new AppOptions()
+                {
+                    Credential = credentials,
+                });
+            }
+
+            _firebaseMessaging = FirebaseMessaging.DefaultInstance;
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Failed to initialise firebase admin sdk");
+            throw;
+        }
+    }
+
+    public async Task<object> UploadFileAsync(IFormFile file, string folderPath = "images", string? customFileName = null)
+    {
+        try
+        {
+            _logger.LogInformation("Entered UploadFileAsync");
+            if (file == null || file.Length == 0)
+            {
+                _logger.LogInformation("File is null or empty");
+                throw new BusinessException(ErrorMessages.NullFile, ErrorCodes.NullFile);
+            }
+            
+            if (file.Length > 50 * 1024 * 1024)
+            {
+                throw new BusinessException("File size exceeds 50MB limit", "FILE_SIZE_EXCEEDS_LIMIT", 400);
+            }
+            
+            
+            var storageClient = await StorageClient.CreateAsync();
+
+            var fileName = customFileName ?? $"{Guid.NewGuid():N}_{file.FileName}";
+            var fullPath = $"{folderPath.TrimEnd()}/{fileName}";
+
+            await using var stream = file.OpenReadStream();
+            
+            _logger.LogInformation("Uploading file to storage");
+            var uploadedFile = await storageClient.UploadObjectAsync(
+                bucket: _bucketName,
+                objectName: fileName,
+                contentType: file.ContentType,
+                source: stream,
+                options: new UploadObjectOptions
+                {
+                    PredefinedAcl = PredefinedObjectAcl.PublicRead,
+                });
+            return new
+            {
+                Url = $"https://storage.googleapis.com/{_bucketName}/{fileName}",
+                Name = uploadedFile.Name
+            };
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
+    }
+
+    public async Task<PushNotitficationResponse> SendNotificationAsync(PushNotificationRequest request)
+    {
+        var messages = new List<Message>();
+
+        foreach (var token in request.DeviceTokens)
+        {
+            var message = new Message()
+            {
+                Token = token,
+                Notification = new Notification()
+                {
+                    Title = request.Title,
+                    Body = request.Body,
+                    ImageUrl = request.ImageUrl,
+                },
+                Data = request.Data,
+                Android = new AndroidConfig()
+                {
+                    Notification = new AndroidNotification()
+                    {
+                        ClickAction = request.ClickAction,
+                        ChannelId = "default_channel"
+                    }
+                },
+                Apns = new ApnsConfig()
+                {
+                    Aps = new Aps()
+                    {
+                        Category = request.ClickAction
+                    }
+                }
+            };
+            messages.Add(message);
+        }
+        
+        var batchResponse = await _firebaseMessaging.SendEachAsync(messages);
+        var failedTokens = new List<string>();
+        for (int i = 0; i < batchResponse.Responses.Count; i++)
+        {
+            if (!batchResponse.Responses[i].IsSuccess)
+            {
+                failedTokens.Add(request.DeviceTokens[i]);
+                _logger.LogWarning($"Failed to send push notification to {request.DeviceTokens[i]}: {batchResponse.Responses[i].Exception}");
+            }
+        }
+
+        if (failedTokens.Any())
+        {
+            await _deviceTokenService.RemoveInvalidTokensAsync(failedTokens);
+        }
+
+        return new PushNotitficationResponse()
+        {
+            Success = batchResponse.Responses.Count > 0,
+            Message = $"Successfully sent {batchResponse.SuccessCount} push notifications",
+            SuccessCount = batchResponse.SuccessCount,
+            FailureCount = batchResponse.FailureCount,
+            FailedTokens = failedTokens,
+        };
+    }
+
+    public async Task<PushNotitficationResponse> SendNotificationToUserAsync(PushNotificationToUserRequest userRequest)
+    {
+        var deviceTokens = await _deviceTokenService.GetUserDeviceTokensAsync(userRequest.UserId);;
+        if (deviceTokens.Count < 0)
+        {
+            _logger.LogInformation("Device token ID not found for {UserId}", userRequest.UserId);
+            throw new KeyNotFoundException($"Device token ID not found for {userRequest.UserId}");
+        }
+
+        var request = new PushNotificationRequest
+        {
+            Title = userRequest.Title,
+            Body = userRequest.Body,
+            DeviceTokens = deviceTokens,
+            Data = userRequest.Data,
+        };
+        return await SendNotificationAsync(request);
+    }
+
+    public async Task<PushNotitficationResponse> SendNotificationToTopicAsync(string topic, string title, string body, Dictionary<string, string>? data = null)
+    {
+        var message = new Message()
+        {
+            Topic = topic,
+            Notification = new Notification()
+            {
+                Title = title,
+                Body = body
+            },
+            Data = data,
+            Android = new AndroidConfig()
+            {
+                Notification = new AndroidNotification()
+                {
+                    ChannelId = "default_channel"
+                }
+            }
+        };
+
+        var response = await _firebaseMessaging.SendAsync(message);
+        return new PushNotitficationResponse
+        {
+            Success = true,
+            Message = $"Push notification sent to topic {topic}. Message ID: {response}",
+            SuccessCount = 1,
+            FailureCount = 0,
+        };
+    }
+
+    public async Task<bool> SubscribeToTopicAsync(SubscribeToTopicRequest request)
+    {
+        var deviceTokens = await _deviceTokenService.GetUserDeviceTokensAsync(request.UserId);;
+        if (deviceTokens.Count < 0)
+        {
+            _logger.LogInformation("Device token ID not found for {UserId}", request.UserId);
+            throw new KeyNotFoundException($"Device token ID not found for {request.UserId}");
+        }
+        var response = await _firebaseMessaging.SubscribeToTopicAsync(deviceTokens, request.Topic);
+        _logger.LogInformation("Successfully subscribed {response.SuccessCount} to topic {TopicName}",response.SuccessCount,  request.Topic);
+        return response.SuccessCount > 0;
+    }
+
+    public async Task<bool> UnSubscribeToTopicAsync(List<string> deviceToken, string topic)
+    {
+        var response = await _firebaseMessaging.UnsubscribeFromTopicAsync(deviceToken, topic);
+        _logger.LogInformation($"Successfully subscribed {deviceToken} to topic {topic}");
+        return response.SuccessCount > 0;
+    }
+}

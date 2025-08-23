@@ -24,15 +24,15 @@ namespace Repository.Migrations
 
             modelBuilder.Entity("ChallengeProfile", b =>
                 {
+                    b.Property<Guid>("ChallengersRunnerId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<Guid>("ChallengesChallengeId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("ProfilesRunnerId")
-                        .HasColumnType("uniqueidentifier");
+                    b.HasKey("ChallengersRunnerId", "ChallengesChallengeId");
 
-                    b.HasKey("ChallengesChallengeId", "ProfilesRunnerId");
-
-                    b.HasIndex("ProfilesRunnerId");
+                    b.HasIndex("ChallengesChallengeId");
 
                     b.ToTable("ChallengeProfile");
                 });
@@ -51,6 +51,9 @@ namespace Repository.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<DateTime>("EndsAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("ImageUrl")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -63,6 +66,11 @@ namespace Repository.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("PushTopic")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<Guid>("RunnerId")
                         .HasColumnType("uniqueidentifier");
@@ -107,6 +115,37 @@ namespace Repository.Migrations
                     b.HasIndex("PostId");
 
                     b.ToTable("Comments");
+                });
+
+            modelBuilder.Entity("Domain.Entities.DeviceToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Platform")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("RunnerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DeviceTokens");
                 });
 
             modelBuilder.Entity("Domain.Entities.Friend", b =>
@@ -304,6 +343,9 @@ namespace Repository.Migrations
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<Guid?>("DeviceTokenId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<int>("Height")
                         .HasColumnType("int");
 
@@ -326,6 +368,8 @@ namespace Repository.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("RunnerId");
+
+                    b.HasIndex("DeviceTokenId");
 
                     b.ToTable("Profiles");
                 });
@@ -432,15 +476,20 @@ namespace Repository.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Password")
-                        .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<bool>("SocialLogin")
+                        .HasColumnType("bit");
 
                     b.Property<DateTime>("TokenConfirmedAt")
                         .HasColumnType("datetime2");
@@ -473,15 +522,15 @@ namespace Repository.Migrations
 
             modelBuilder.Entity("ChallengeProfile", b =>
                 {
-                    b.HasOne("Domain.Entities.Challenge", null)
+                    b.HasOne("Domain.Entities.Profile", null)
                         .WithMany()
-                        .HasForeignKey("ChallengesChallengeId")
+                        .HasForeignKey("ChallengersRunnerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Domain.Entities.Profile", null)
+                    b.HasOne("Domain.Entities.Challenge", null)
                         .WithMany()
-                        .HasForeignKey("ProfilesRunnerId")
+                        .HasForeignKey("ChallengesChallengeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -555,11 +604,17 @@ namespace Repository.Migrations
 
             modelBuilder.Entity("Domain.Entities.Profile", b =>
                 {
+                    b.HasOne("Domain.Entities.DeviceToken", "DeviceToken")
+                        .WithMany()
+                        .HasForeignKey("DeviceTokenId");
+
                     b.HasOne("Domain.Entities.Runner", "Runner")
                         .WithOne("Profile")
                         .HasForeignKey("Domain.Entities.Profile", "RunnerId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("DeviceToken");
 
                     b.Navigation("Runner");
                 });

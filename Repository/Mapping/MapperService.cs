@@ -1,6 +1,8 @@
 ﻿using Application.Interfaces.Dtos;
+using Application.Interfaces.Dtos.Challenge;
 using Application.Interfaces.Dtos.Run;
 using Application.Models.Request.Authentication;
+using Application.Models.Request.Challenge;
 using Application.Models.Response.People;
 using AutoMapper;
 using Domain.Entities;
@@ -14,6 +16,23 @@ public class MapperService : Profile
 {
     public MapperService()
     {
+        CreateMap<Challenge, ChallengeDto>()
+            .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
+            .ForMember(dest => dest.Target, opt => opt.MapFrom(src => src.Target))
+            .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description))
+            .ForMember(dest => dest.ImageUrl, opt => opt.MapFrom(src => src.ImageUrl))
+            .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedAt))
+            .ForMember(dest => dest.EndsAt, opt => opt.MapFrom(src => src.EndsAt));
+        
+        CreateMap<CreateChallengeRequest, Challenge>()
+            .ForMember(dest => dest.ChallengeId, opt => opt.Ignore())
+            .ForMember(dest => dest.RunnerId, opt => opt.MapFrom(src => src.RunnerId))
+            .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
+            .ForMember(dest => dest.Target, opt => opt.MapFrom(src => src.Target))
+            .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.Description))
+            .ForMember(dest => dest.ImageUrl, opt => opt.MapFrom(src => src.ImageUrl))
+            .ForMember(dest => dest.EndsAt, opt => opt.MapFrom(src => src.EndsAt));
+            
         CreateMap<Runner, RunnerDto>();
         
         CreateMap<RunnerDto, Runner>();

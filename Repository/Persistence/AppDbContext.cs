@@ -73,4 +73,5 @@ public class AppDbContext : DbContext
     public DbSet<Challenge> Challenges { get; set; }
     public DbSet<Group> Groups { get; set; }
     public DbSet<RunRoutePoint> RunRoutePoints { get; set; }
+    public DbSet<DeviceToken> DeviceTokens { get; set; }
 }

@@ -9,9 +9,9 @@ using Domain.Entities;
 using Domain.Models.Request.Account;
 using Domain.Models.Request.Authentication;
 using Domain.Models.Response;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Repository.Persistence;
 using Profile = Domain.Entities.Profile;
@@ -23,14 +23,20 @@ public class AuthenticationRepository : IAuthentication
     private readonly AppDbContext _dbContext;
     private readonly IMapper _mapper;
     private readonly IConfiguration _configuration;
-    private readonly IEmailService _emailService;
+    private readonly INotificationService _notification;
+    private readonly ILogger<AuthenticationRepository> _logger;
+    private readonly IRunner _runnerRepository;
     
-    public AuthenticationRepository(AppDbContext dbContext, IMapper mapper, IConfiguration configuration, IEmailService emailService)
+    public AuthenticationRepository(AppDbContext dbContext, IMapper mapper, 
+        IConfiguration configuration, INotificationService notificationService, 
+        ILogger<AuthenticationRepository> logger, IRunner runnerRepository)
     {
         _dbContext = dbContext;
         _mapper = mapper;
         _configuration = configuration;
-        _emailService = emailService;
+        _notification =  notificationService;
+        _logger = logger;
+        _runnerRepository = runnerRepository;
     }
     
     public async Task<LoginResponse> CompleteProfile(CompleteProfileReq profileReq)
@@ -77,7 +83,7 @@ public class AuthenticationRepository : IAuthentication
 
     public async Task<LoginResponse> Login(LoginRequest request)
     {
-        var user = _dbContext.Runners.SingleOrDefault(r => r.Email == request.Email && r.Password == request.Password);;
+        var user = _dbContext.Runners.SingleOrDefault(r => r.Email == request.Email && r.Password == request.Password);
 
         if (user == null)
         {
@@ -90,13 +96,87 @@ public class AuthenticationRepository : IAuthentication
         
         var token = await GenerateJwtToken(user);
         var profile = await _dbContext.Profiles.AsNoTracking().FirstOrDefaultAsync(u => u.RunnerId == user.RunnerId);
-
+        var account = profile != null ? _mapper.Map<Runner, CreateAccountResponse>(user) : null;
+        
         return new LoginResponse
         {
             Token = token,
-            Account = profile != null ? _mapper.Map<Runner, CreateAccountResponse>(user) : null,
+            Account = account,
             Profile = profile
         };
+    }
+    
+    public async Task<LoginResponse> Login(string usrToken)
+    {
+        try
+        {
+            _logger.LogInformation("Going to get social login details from token");
+            var socialLoginDetails = GetPrincipalFromToken(usrToken);
+            var emailClaim = socialLoginDetails?.Result?.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+            if (emailClaim == null )
+            {
+                throw new BusinessException(
+                    "Invalid Credentials",
+                    "INVALID_CREDENTIALS",
+                    404
+                );
+            }
+            
+            var user = _dbContext.Runners.SingleOrDefault(r => r.Email == emailClaim && r.SocialLogin);
+            
+            if (user == null)
+            {
+                _logger.LogInformation("User not found {Email}", emailClaim);
+                throw new BusinessException(
+                    "Either email or password is invalid",
+                    "INVALID_CREDENTIALS",
+                    404
+                );
+            }
+        
+            var token = await GenerateJwtToken(user);
+            var profile = await _dbContext.Profiles.AsNoTracking().FirstOrDefaultAsync(u => u.RunnerId == user.RunnerId);
+            var account = profile != null 
+                ? _mapper.Map<Runner, CreateAccountResponse>(user) 
+                : new CreateAccountResponse { Email = user.Email , Name = user.Name, RunnerId = user.RunnerId };
+        
+            return new LoginResponse
+            {
+                Token = token,
+                Account = account,
+                Profile = profile
+            };
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
+    }
+
+    public async Task<string?> LoginWithGoogle(AccountCreateRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Starting Login with google for {Email}", request.Email); 
+            _logger.LogInformation("Going to db to find existing profile for {Email}", request.Email);
+           var runner = await _dbContext.Runners.FirstOrDefaultAsync(r => r.Email == request.Email);
+           if (runner != null)
+           {
+                _logger.LogInformation("Generating token for {Email}", request.Email);
+               return await GenerateJwtToken(runner);
+           }
+           
+           _logger.LogInformation("No existing profile found for {Email}, creating new profile", request.Email);
+           var newRunner = await _runnerRepository.CreateAccount(request);
+           _logger.LogInformation("New profile created for {Email}", request.Email);
+           return null;
+        }
+        catch (Exception e)
+        {
+            _logger.LogError("An exception occured during Login with google for {Email}, {Message}", request.Email, e.Message);
+            throw;
+        }
     }
 
     private async Task<string> GenerateJwtToken(Runner runner)
@@ -124,6 +204,47 @@ public class AuthenticationRepository : IAuthentication
             signingCredentials: credentials);
         
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    private async Task<ClaimsPrincipal?> GetPrincipalFromToken(string token)
+    {
+        try
+        {
+            _logger.LogInformation("Starting Getting Principal from Token");
+            var jwtSettings = _configuration.GetSection("JwtSettings");
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes(jwtSettings["SecretKey"]);
+
+            var validationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidIssuer = jwtSettings["Issuer"],
+
+                ValidateAudience = true,
+                ValidAudience = jwtSettings["Audience"],
+
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(key),
+
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.Zero
+            };
+        
+            var principal = tokenHandler.ValidateToken(token, validationParameters, out var validatedToken);
+            if (validatedToken is JwtSecurityToken jwtToken &&
+                jwtToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+            {
+                _logger.LogInformation("Successfully authenticated token");
+                return principal;
+            }
+
+            throw new BusinessException("Invalid token");
+        }
+        catch (Exception e)
+        {
+            _logger.LogError("An exception occured during Getting Principal {Exception}", e);
+            throw new Exception();
+        }
     }
 
     public async Task ConfirmEmail(string email)

@@ -2,10 +2,13 @@
 using Application.Interfaces;
 using Application.Middlewares.ErrorHandling;
 using Application.Models.Request.People;
+using AutoMapper;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Repository.Persistence;
+using Profile = Domain.Entities.Profile;
 
 namespace Repository.Repositories.Helpers;
 
@@ -13,11 +16,13 @@ public class PeopleHelpers : IPeopleHelper
 {
     private readonly AppDbContext _dbContext;
     private readonly IConfiguration _configuration;
+    private readonly ILogger<PeopleHelpers> _logger;
 
-    public PeopleHelpers(AppDbContext dbContext, IConfiguration configuration)
+    public PeopleHelpers(AppDbContext dbContext, IConfiguration configuration, ILogger<PeopleHelpers> logger)
     {
         _dbContext = dbContext;
         _configuration = configuration;
+        _logger = logger;
     }
     
     public async Task<Friend> UpdateFriendRequestHelper(UpdateFriendShip request)
@@ -47,12 +52,14 @@ public class PeopleHelpers : IPeopleHelper
     
     public async Task<Profile> GetValidProfileAsync(Guid runnerId, string errorCode, string errorMessage)
     {
+        _logger.LogInformation("Start runner valid check {RunnerId}", runnerId);
         var profile = await _dbContext.Profiles
             .AsNoTracking()
             .FirstOrDefaultAsync(p => p.RunnerId == runnerId);
 
         if (profile is null)
         {
+            _logger.LogInformation("Runner not found {RunnerId}", runnerId);
             throw new BusinessException(errorMessage, errorCode, 404);
         }
 

@@ -2,23 +2,22 @@
 using System.Net.Mail;
 using Application.Interfaces;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using Repository.Persistence;
 
 namespace Repository.Repositories;
 
-public class EmailService : IEmailService
+public class NotificationService: INotificationService
 {
     private readonly AppDbContext _dbContext;
     private readonly IConfiguration _config;
 
-    public EmailService(AppDbContext dbContext,  IConfiguration configuration)
+    public NotificationService(AppDbContext dbContext,  IConfiguration configuration)
     {
         _dbContext = dbContext;
         _config = configuration;
     }
     
-    public async Task SendAsync(string to, string subject, string htmlBody)
+    public async Task SendEmailAsync(string to, string subject, string htmlBody)
     {
         var smtpClient = new SmtpClient(_config["EmailSettings:SmtpServer"])
         {
@@ -42,4 +41,15 @@ public class EmailService : IEmailService
 
         await smtpClient.SendMailAsync(mail);
     }
+
+    public async Task SendPushNotificationAsync(string to, string subject, string message)
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task SendSmsAsync(string number, string message)
+    {
+        throw new NotImplementedException();
+    }
+
 }
