@@ -1,10 +1,15 @@
-﻿using Application.Interfaces;
+﻿using Application.Errors;
+using Application.Interfaces;
 using Application.Interfaces.Dtos.PushNotifications;
+using Application.Middlewares.ErrorHandling;
 using Application.Models.Request.PushNotification;
 using Application.Models.Response;
 using FirebaseAdmin;
 using FirebaseAdmin.Messaging;
 using Google.Apis.Auth.OAuth2;
+using Google.Cloud.Storage.V1;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -15,13 +20,16 @@ public class FirebasePushNotificationService : IPushNotificationService
     private readonly FirebaseMessaging _firebaseMessaging;
     private readonly ILogger<FirebasePushNotificationService> _logger;
     private readonly IDeviceTokenService _deviceTokenService;
-
+    private readonly string _bucketName = "your-project-id.appspot.com";
+    private readonly IConfiguration _configuration;
+    
     public FirebasePushNotificationService( IOptions<FirebaseConfig> _firebaseConfig,
-        ILogger<FirebasePushNotificationService> logger, IDeviceTokenService deviceTokenService)
+        ILogger<FirebasePushNotificationService> logger, IDeviceTokenService deviceTokenService, IConfiguration configuration)
     {
         _logger = logger;
         _deviceTokenService = deviceTokenService;
-
+        _configuration = configuration;
+        
         try
         {
             if (FirebaseApp.DefaultInstance == null)
@@ -38,6 +46,53 @@ public class FirebasePushNotificationService : IPushNotificationService
         catch (Exception e)
         {
             _logger.LogError(e, "Failed to initialise firebase admin sdk");
+            throw;
+        }
+    }
+
+    public async Task<object> UploadFileAsync(IFormFile file, string folderPath = "images", string? customFileName = null)
+    {
+        try
+        {
+            _logger.LogInformation("Entered UploadFileAsync");
+            if (file == null || file.Length == 0)
+            {
+                _logger.LogInformation("File is null or empty");
+                throw new BusinessException(ErrorMessages.NullFile, ErrorCodes.NullFile);
+            }
+            
+            if (file.Length > 50 * 1024 * 1024)
+            {
+                throw new BusinessException("File size exceeds 50MB limit", "FILE_SIZE_EXCEEDS_LIMIT", 400);
+            }
+            
+            
+            var storageClient = await StorageClient.CreateAsync();
+
+            var fileName = customFileName ?? $"{Guid.NewGuid():N}_{file.FileName}";
+            var fullPath = $"{folderPath.TrimEnd()}/{fileName}";
+
+            await using var stream = file.OpenReadStream();
+            
+            _logger.LogInformation("Uploading file to storage");
+            var uploadedFile = await storageClient.UploadObjectAsync(
+                bucket: _bucketName,
+                objectName: fileName,
+                contentType: file.ContentType,
+                source: stream,
+                options: new UploadObjectOptions
+                {
+                    PredefinedAcl = PredefinedObjectAcl.PublicRead,
+                });
+            return new
+            {
+                Url = $"https://storage.googleapis.com/{_bucketName}/{fileName}",
+                Name = uploadedFile.Name
+            };
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
             throw;
         }
     }

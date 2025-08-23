@@ -10,4 +10,5 @@ public class ErrorMessages
     public const string IncompleteRun = "You still have an uncompleted run.";
     public const string NoIncompleteRunFound = "No incomplete run found.";
     public const string ResourceAlreadyExists = "Resource already exists.";
+    public const string NullFile = "File can not be null.";
 }

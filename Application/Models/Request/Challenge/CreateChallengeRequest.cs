@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace Application.Models.Request.Challenge;
 
@@ -15,4 +16,5 @@ public class CreateChallengeRequest
     [Url]
     public required string ImageUrl { get; set; }
     public DateTime EndsAt { get; set; }
+    public required IFormFile ChallengeArt { get; set; }
 }

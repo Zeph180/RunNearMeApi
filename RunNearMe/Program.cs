@@ -20,7 +20,11 @@ using Repository.Repositories;
 using Repository.Repositories.Helpers;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using Application.Models.Request.Cloudinary;
+using Application.Services;
+using CloudinaryDotNet;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http.Features;
 
 namespace RunNearMe;
 
@@ -67,6 +71,11 @@ public class Program
             options.MinimumSameSitePolicy = SameSiteMode.None;
             options.HttpOnly = Microsoft.AspNetCore.CookiePolicy.HttpOnlyPolicy.None;
             options.Secure = CookieSecurePolicy.SameAsRequest;
+        });
+
+        builder.Services.Configure<FormOptions>(options =>
+        {
+            options.MultipartBodyLengthLimit = 50 * 1024 * 1024; // 50 MB
         });
 
         builder.Services.AddAuthentication(options =>
@@ -139,6 +148,19 @@ public class Program
         builder.Services.AddControllers(
             options => options.Filters.Add<ValidationFilter>());
         builder.Services.AddLogging();
+        
+        builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("Cloudinary"));
+        builder.Services.AddSingleton<Cloudinary>(provider =>
+        {
+            var config = builder.Configuration.GetSection("Cloudinary");
+            var account = new Account(
+            config["CloudName"],
+            config["ApiKey"],
+            config["ApiSecret"]
+            );
+            return new Cloudinary(account);
+        });
+        builder.Services.AddScoped<ICloudinaryService, CloudinaryService>();
         builder.Services.AddScoped<IRunner, RunnerRepository>();
         builder.Services.AddScoped<IAuthentication, AuthenticationRepository>();
         builder.Services.AddScoped<INotificationService,NotificationService>();
