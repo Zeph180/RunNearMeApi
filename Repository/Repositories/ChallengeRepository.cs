@@ -1,9 +1,11 @@
-﻿using Application.Errors;
+﻿using Application.Enums;
+using Application.Errors;
 using Application.Interfaces;
 using Application.Interfaces.Dtos.Challenge;
 using Application.Middlewares.ErrorHandling;
 using Application.Models.Request.Challenge;
 using Application.Models.Request.Cloudinary;
+using Application.Models.Response.Challenge;
 using Application.Services;
 using AutoMapper;
 using Domain.Entities;
@@ -122,7 +124,7 @@ public class ChallengeRepository : IChallengeRepository
         }
     }
 
-    public async Task<ChallengeDto> JoinChallenge(ChallengeJoinRequest request)
+    public async Task<JoinChallengeResponse> JoinChallenge(ChallengeJoinRequest request)
     {
         try
         {
@@ -146,7 +148,11 @@ public class ChallengeRepository : IChallengeRepository
             challenge?.Challengers?.Add(challenger);
             await _dbContext.SaveChangesAsync();   
             _logger.LogInformation("Runner joined the challenge. {RunnerId}, {ChallengeId}", request.RunnerId, request.ChallengeId);
-            return _mapper.Map<Challenge, ChallengeDto>(challenge);
+            return new JoinChallengeResponse
+            {
+                Challenge = _mapper.Map<Challenge, ChallengeDto>(challenge),
+                Status = nameof(StatusEnum.Success)
+            };        
         }
         catch (Exception e)
         {
@@ -155,7 +161,7 @@ public class ChallengeRepository : IChallengeRepository
         }
     }
 
-    public async Task<ChallengeDto> ExitChallenge(ChallengeJoinRequest request)
+    public async Task<JoinChallengeResponse> ExitChallenge(ChallengeJoinRequest request)
     {
         try
         {
@@ -179,7 +185,11 @@ public class ChallengeRepository : IChallengeRepository
             challenge?.Challengers?.Remove(challenger);
             await _dbContext.SaveChangesAsync();   
             _logger.LogInformation("Runner exited the challenge. {RunnerId}, {ChallengeId}", request.RunnerId, request.ChallengeId);
-            return _mapper.Map<Challenge, ChallengeDto>(challenge);
+            return new JoinChallengeResponse
+            {
+                Challenge = _mapper.Map<Challenge, ChallengeDto>(challenge),
+                Status = nameof(StatusEnum.Success)
+            };
         }
         catch (Exception e)
         {
