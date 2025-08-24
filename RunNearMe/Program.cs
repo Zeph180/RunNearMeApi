@@ -19,6 +19,7 @@ using Repository.Persistence;
 using Repository.Repositories;
 using Repository.Repositories.Helpers;
 using System.IdentityModel.Tokens.Jwt;
+using System.Reflection;
 using System.Security.Claims;
 using Application.Models.Request.Cloudinary;
 using Application.Services;
@@ -46,7 +47,12 @@ public class Program
         
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddSwaggerGen();
+        builder.Services.AddSwaggerGen(options =>
+        {
+            var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+            var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+            options.IncludeXmlComments(xmlPath);
+        });
         
         //Register DB Context with DI
         builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(

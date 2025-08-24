@@ -57,7 +57,7 @@ public class Authentication : ControllerBase
     }
 
     /// <summary>
-    /// 
+    /// The client calls this method to get details for a user who logged in with google
     /// </summary>
     /// <param name="authorization"></param>
     /// <returns></returns>
@@ -81,7 +81,7 @@ public class Authentication : ControllerBase
     }
 
     /// <summary>
-    /// 
+    /// The client calls this method to initiate login with google
     /// </summary>
     /// <param name="returnUrl"></param>
     /// <returns></returns>
@@ -108,7 +108,7 @@ public class Authentication : ControllerBase
     }
     
     /// <summary>
-    /// 
+    /// Google calls posts data to this endpoint after authenticating a user
     /// </summary>
     /// <returns></returns>
     [HttpGet("google-callback")]

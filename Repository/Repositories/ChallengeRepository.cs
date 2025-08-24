@@ -115,7 +115,7 @@ public class ChallengeRepository : IChallengeRepository
         try
         {
             _logger.LogInformation("Getting active challenges");
-            return await GetChallengeSListAsync(request.ChallengeId, request.PageNumber, request.PageSize, request.Joined);;
+            return await GetChallengeSListAsync(request.RunnerId, request.PageNumber, request.PageSize, request.Joined);;
         }
         catch (Exception e)
         { 
