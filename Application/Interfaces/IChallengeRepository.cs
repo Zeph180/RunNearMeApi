@@ -7,6 +7,8 @@ namespace Application.Interfaces;
 public interface IChallengeRepository
 {
     Task<ChallengeDto> CreateChallenge(CreateChallengeRequest request);
+    Task<JoinChallengeResponse> UpdateChallengeDetails(UpdateChallengeRequest request);
+    Task<JoinChallengeResponse> UpdateChallengeArt(UpdateChallangeArtRequest request);
     Task<bool> DeleteChallenge(ChallengeJoinRequest request);
     Task<List<ChallengeDto>> GetActiveChallenges(GetChallengesRequest request);
     Task<JoinChallengeResponse> JoinChallenge(ChallengeJoinRequest request);

@@ -34,6 +34,32 @@ public class ChallengeController : ControllerBase
         var result = await _challengeRepository.CreateChallenge(request);
         return Ok(ApiResponse<object>.SuccessResponse(result));
     }
+
+    /// <summary>
+    /// Responsible for updating the textual details of a challenge
+    /// </summary>
+    /// <param name="request"></param>
+    /// <returns></returns>
+    [HttpPut("/update-challenge-details")]
+    public async Task<IActionResult> UpdateChallengeDetails([FromForm] UpdateChallengeRequest request)
+    {
+        _logger.LogInformation("Updating challenge");
+        var result = await _challengeRepository.UpdateChallengeDetails(request);
+        return Ok(ApiResponse<object>.SuccessResponse(result));
+    }
+
+    /// <summary>
+    /// This endpoint is responsible for updating challenge art image
+    /// </summary>
+    /// <param name="request"></param>
+    /// <returns></returns>
+    [HttpPut("/update-challenge-art")]
+    public async Task<IActionResult> UpdateChallengeArt([FromForm] UpdateChallangeArtRequest request)
+    {
+        _logger.LogInformation("Updating challenge art");
+        var result = await _challengeRepository.UpdateChallengeArt(request);
+        return Ok(ApiResponse<object>.SuccessResponse(result));
+    }
     
     /// <summary>
     /// Method for deleting a challenge

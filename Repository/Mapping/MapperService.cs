@@ -16,6 +16,8 @@ public class MapperService : Profile
 {
     public MapperService()
     {
+        CreateMap<UpdateChallengeRequest, Challenge>();
+        
         CreateMap<Challenge, ChallengeDto>()
             .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Name))
             .ForMember(dest => dest.Target, opt => opt.MapFrom(src => src.Target))

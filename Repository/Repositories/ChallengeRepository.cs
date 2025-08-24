@@ -80,6 +80,76 @@ public class ChallengeRepository : IChallengeRepository
         }
     }
 
+    public async Task<JoinChallengeResponse> UpdateChallengeDetails(UpdateChallengeRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Starting to update challenge");
+            var challenge = await GetChallengeToUpdateAsync(request.RunnerId, request.ChallengeId);
+            
+            _logger.LogInformation("Challenge found {ChallengeId} Admin {RunnerId}", request.ChallengeId, request.RunnerId);
+            challenge = _mapper.Map<UpdateChallengeRequest, Challenge>(request);
+            await _dbContext.SaveChangesAsync();
+            _logger.LogInformation("Challenge updated successfully {ChallengeId} Admin {RunnerId}",  request.ChallengeId, request.RunnerId);
+            return new JoinChallengeResponse
+            {
+                Challenge = _mapper.Map<Challenge, ChallengeDto>(challenge),
+                Status = nameof(StatusEnum.Success)
+            };
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
+    }
+
+    public async Task<JoinChallengeResponse> UpdateChallengeArt(UpdateChallangeArtRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Starting to update challenge art {ChallengeId}",  request.ChallengeId);
+            var challenge = await GetChallengeToUpdateAsync(request.RunnerId, request.ChallengeId);
+            _logger.LogInformation("Challenge found {ChallengeId} Admin {RunnerId}", request.ChallengeId, request.RunnerId);
+            _logger.LogInformation("Proceeding to upload challenge art {ChallengeId}",  request.ChallengeId);
+
+            var imageUploadRequest = new ImageUploadRequest
+            {
+                Image = request.ChallengeArt,
+                Folder = "ChallengeArts",
+                PublicId = challenge?.ImageUrl
+            };
+            var fileUploadResponse = await _cloudinaryService.UploadImageAsync(imageUploadRequest);
+            _logger.LogInformation("Back from uploading challenge art {ChallengeId}",   request.ChallengeId);
+            if (fileUploadResponse == null)
+            {
+                _logger.LogWarning("File upload response was null {challengeId}",  request.ChallengeId);
+                throw new BusinessException(ErrorMessages.FileUploadFailed, ErrorCodes.FileUploadFailed);
+            }
+
+            if (!fileUploadResponse.Success)
+            {
+                _logger.LogWarning("{ErrorMessage} {challengeId}",fileUploadResponse.ErrorMessage,  request.ChallengeId);
+                throw new BusinessException(ErrorMessages.FileUploadFailed, ErrorCodes.FileUploadFailed);
+            }
+            
+            _logger.LogInformation("Uploading challenge art succeeded {ChallengeId}",request.ChallengeId);
+            challenge.ImageUrl = fileUploadResponse.Url;
+            await _dbContext.SaveChangesAsync();
+            _logger.LogInformation("Challenge updated successfully {ChallengeId}",request.ChallengeId);
+            return new JoinChallengeResponse
+            {
+                Challenge = _mapper.Map<Challenge, ChallengeDto>(challenge),
+                Status = nameof(StatusEnum.Success)
+            };
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
+    }
+
     private static string GenerateUniqueTopic(string prefix)
     {
         return $"{prefix}_{Guid.NewGuid():N}";
@@ -242,6 +312,30 @@ public class ChallengeRepository : IChallengeRepository
         {
             _logger.LogError(e, "Error getting challenges for {RunnerId}", runnerId);
             throw ;
+        }
+    }
+
+    private async Task<Challenge?> GetChallengeToUpdateAsync(Guid runnerId, Guid  challengeId)
+    {
+        try
+        {
+            _logger.LogInformation("Starting to update challenge");
+            var challenge = await _dbContext.Challenges
+                .FirstOrDefaultAsync(c => 
+                    c.ChallengeId == challengeId 
+                    && c.RunnerId == runnerId 
+                    && c.EndsAt > DateTime.UtcNow
+                    && c.IsDeleted == false);
+            _logger.LogInformation("Challenge found {ChallengeId} Admin {RunnerId}", challengeId, runnerId);
+
+            if (challenge != null) return challenge;
+            _logger.LogError("Failed to update challenge");
+            throw new BusinessException(ErrorMessages.ResourceNotFound, ErrorCodes.ResourceNotFound);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error getting challenge");
+            throw new BusinessException(ErrorMessages.UnHandledException, ErrorCodes.UnHandledException);;
         }
     }
 }
