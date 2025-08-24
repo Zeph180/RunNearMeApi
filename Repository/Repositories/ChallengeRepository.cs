@@ -85,7 +85,7 @@ public class ChallengeRepository : IChallengeRepository
         try
         {
             _logger.LogInformation("Starting to update challenge");
-            var challenge = await GetChallengeToUpdateAsync(request.RunnerId, request.ChallengeId);
+            var challenge = await GetChallengeAsync(request.ChallengeId, onlyIfActive: true, adminRunnerId: request.RunnerId);;
             
             _logger.LogInformation("Challenge found {ChallengeId} Admin {RunnerId}", request.ChallengeId, request.RunnerId);
             challenge = _mapper.Map<UpdateChallengeRequest, Challenge>(request);
@@ -109,7 +109,7 @@ public class ChallengeRepository : IChallengeRepository
         try
         {
             _logger.LogInformation("Starting to update challenge art {ChallengeId}",  request.ChallengeId);
-            var challenge = await GetChallengeToUpdateAsync(request.RunnerId, request.ChallengeId);
+            var challenge = await GetChallengeAsync(request.ChallengeId, onlyIfActive: true, adminRunnerId: request.RunnerId);;
             _logger.LogInformation("Challenge found {ChallengeId} Admin {RunnerId}", request.ChallengeId, request.RunnerId);
             _logger.LogInformation("Proceeding to upload challenge art {ChallengeId}",  request.ChallengeId);
 
@@ -199,7 +199,7 @@ public class ChallengeRepository : IChallengeRepository
         try
         {
             _logger.LogInformation("Starting to join challenge {ChallengeId} {Runner}", request.ChallengeId, request.RunnerId);
-            var challenge = await GetChallengeAsync(request.ChallengeId);
+            var challenge = await GetChallengeAsync(request.ChallengeId, true, true);;
             if (challenge == null)
             {
                 _logger.LogWarning("Challenge not found. RunnerId: {RunnerId}, ChallengeId: {ChallengeId}", request.RunnerId, request.ChallengeId);
@@ -268,22 +268,6 @@ public class ChallengeRepository : IChallengeRepository
         }
     }
     
-    private async Task<Challenge?> GetChallengeAsync(Guid challengeId) {
-        try
-        {
-            _logger.LogInformation("Getting challenge {challengeId}", challengeId);
-            var challenge = await _dbContext.Challenges
-                .FirstOrDefaultAsync(c => c.ChallengeId == challengeId);
-            
-            return challenge;
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(e, "Error getting challenge {challengeId}", challengeId);
-            throw ;
-        }
-    }
-    
     private async Task<List<ChallengeDto>> GetChallengeSListAsync(Guid runnerId, int pageNumber = 1, int pageSize = 10, bool joined = false) {
         try
         {
@@ -314,28 +298,43 @@ public class ChallengeRepository : IChallengeRepository
             throw ;
         }
     }
-
-    private async Task<Challenge?> GetChallengeToUpdateAsync(Guid runnerId, Guid  challengeId)
+    
+    private async Task<Challenge?> GetChallengeAsync(
+        Guid challengeId,
+        bool includeChallengers = false,
+        bool onlyIfActive = true,
+        Guid? adminRunnerId = null)
     {
         try
         {
-            _logger.LogInformation("Starting to update challenge");
-            var challenge = await _dbContext.Challenges
-                .FirstOrDefaultAsync(c => 
-                    c.ChallengeId == challengeId 
-                    && c.RunnerId == runnerId 
-                    && c.EndsAt > DateTime.UtcNow
-                    && c.IsDeleted == false);
-            _logger.LogInformation("Challenge found {ChallengeId} Admin {RunnerId}", challengeId, runnerId);
+            _logger.LogInformation("Getting challenge {ChallengeId}", challengeId);
 
-            if (challenge != null) return challenge;
-            _logger.LogError("Failed to update challenge");
-            throw new BusinessException(ErrorMessages.ResourceNotFound, ErrorCodes.ResourceNotFound);
+            IQueryable<Challenge> query = _dbContext.Challenges;
+
+            if (includeChallengers)
+                query = query.Include(c => c.Challengers);
+
+            query = query.Where(c => c.ChallengeId == challengeId);
+
+            if (onlyIfActive)
+                query = query.Where(c => !c.IsDeleted && c.EndsAt > DateTime.UtcNow);
+
+            if (adminRunnerId != null)
+                query = query.Where(c => c.RunnerId == adminRunnerId);
+
+            var challenge = await query.FirstOrDefaultAsync();
+
+            if (challenge == null)
+            {
+                _logger.LogWarning("Challenge not found with applied filters. ChallengeId: {ChallengeId}", challengeId);
+            }
+
+            return challenge;
         }
         catch (Exception e)
         {
-            _logger.LogError(e, "Error getting challenge");
-            throw new BusinessException(ErrorMessages.UnHandledException, ErrorCodes.UnHandledException);;
+            _logger.LogError(e, "Error retrieving challenge. ChallengeId: {ChallengeId}", challengeId);
+            throw new BusinessException(ErrorMessages.UnHandledException, ErrorCodes.UnHandledException);
         }
     }
 }
