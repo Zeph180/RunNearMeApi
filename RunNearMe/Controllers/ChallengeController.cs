@@ -55,7 +55,7 @@ public class ChallengeController : ControllerBase
     /// <param name="request"></param>
     /// <returns></returns>
     [HttpPut("update-challenge-art")]
-    public async Task<IActionResult> UpdateChallengeArt([FromForm] UpdateChallangeArtRequest request)
+    public async Task<IActionResult> UpdateChallengeArt([FromForm] UpdateChallengeArtRequest request)
     {
         _logger.LogInformation("Updating challenge art");
         var result = await _challengeRepository.UpdateChallengeArt(request);

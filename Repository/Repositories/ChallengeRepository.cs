@@ -115,7 +115,7 @@ public class ChallengeRepository : IChallengeRepository
         }
     }
 
-    public async Task<JoinChallengeResponse> UpdateChallengeArt(UpdateChallangeArtRequest request)
+    public async Task<JoinChallengeResponse> UpdateChallengeArt(UpdateChallengeArtRequest request)
     {
         try
         {

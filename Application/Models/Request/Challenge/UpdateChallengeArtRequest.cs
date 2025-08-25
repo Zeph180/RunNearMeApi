@@ -2,7 +2,7 @@
 
 namespace Application.Models.Request.Challenge;
 
-public class UpdateChallangeArtRequest
+public class UpdateChallengeArtRequest
 {
     public Guid RunnerId { get; set; }
     public Guid ChallengeId { get; set; }
