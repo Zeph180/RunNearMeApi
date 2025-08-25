@@ -7,7 +7,7 @@ public class Post
     public Guid PostId { get; set; }
     public Guid RunnerId { get; set; }
     [MaxLength(500)]
-    public string? Caption { get; set; }
+    public required string Caption { get; set; }
     public DateTime CreatedAt { get; set; }
     public bool IsDeleted { get; set; }
     public DateTime? DeletedAt { get; set; }
