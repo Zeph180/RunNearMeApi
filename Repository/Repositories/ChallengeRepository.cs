@@ -24,17 +24,20 @@ public class ChallengeRepository : IChallengeRepository
     private readonly IPeopleHelper _peopleHelper;
     private readonly ILogger<ChallengeRepository> _logger;
     private readonly ICloudinaryService _cloudinaryService;
+    private readonly IPushNotificationService _pushNotificationService;
     
     public ChallengeRepository(
         AppDbContext dbContext, IMapper mapper, 
         IPeopleHelper peopleHelper, ILogger<ChallengeRepository> logger, 
-        ICloudinaryService cloudinaryService)
+        ICloudinaryService cloudinaryService,
+        IPushNotificationService pushNotificationService)
     {
         _dbContext = dbContext;
         _mapper = mapper;
         _peopleHelper = peopleHelper;
         _logger = logger;
         _cloudinaryService = cloudinaryService;
+        _pushNotificationService = pushNotificationService;
     }
     
     public async Task<ChallengeDto> CreateChallenge(CreateChallengeRequest request)
@@ -71,7 +74,14 @@ public class ChallengeRepository : IChallengeRepository
            
             _dbContext.Challenges.Add(challenge);
             await _dbContext.SaveChangesAsync();
-            _logger.LogInformation("Challenge created successfully");
+            _logger.LogInformation("Challenge created successfully {ChallengeId}", challenge.ChallengeId);
+            _logger.LogInformation("Adding admin as a challenger {ChallengeId}, {Admin}", challenge.ChallengeId, request.RunnerId);
+            var adminJoinChallengeRequest = new ChallengeJoinRequest
+            {
+                ChallengeId = challenge.ChallengeId,
+                RunnerId = request.RunnerId,
+            };
+            await JoinChallenge(adminJoinChallengeRequest);
             return _mapper.Map<Challenge, ChallengeDto>(challenge);
         }
         catch (Exception e)
