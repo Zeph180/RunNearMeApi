@@ -25,7 +25,7 @@ public class People : ControllerBase
    /// <param name="pageSize"></param>
    /// <param name="pageNumber"></param>
    /// <returns></returns>
-   [HttpGet("/get-people/{runnerId}&pageSize={pageSize}&pageNumber={pageNumber}")]
+   [HttpGet("get-people/{runnerId}&pageSize={pageSize}&pageNumber={pageNumber}")]
    public async Task<IActionResult> GetPeople([FromRoute]Guid runnerId, [FromQuery]int pageSize, [FromQuery]int pageNumber)
    {
       var people = await _people.GetPeople(runnerId, pageNumber, pageSize);

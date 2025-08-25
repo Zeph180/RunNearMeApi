@@ -19,12 +19,14 @@ using Repository.Persistence;
 using Repository.Repositories;
 using Repository.Repositories.Helpers;
 using System.IdentityModel.Tokens.Jwt;
+using System.Reflection;
 using System.Security.Claims;
 using Application.Models.Request.Cloudinary;
 using Application.Services;
 using CloudinaryDotNet;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http.Features;
+using Repository.Services;
 
 namespace RunNearMe;
 
@@ -45,7 +47,12 @@ public class Program
         
         // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
         builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddSwaggerGen();
+        builder.Services.AddSwaggerGen(options =>
+        {
+            var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+            var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+            options.IncludeXmlComments(xmlPath);
+        });
         
         //Register DB Context with DI
         builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(
@@ -167,7 +174,7 @@ public class Program
         builder.Services.AddScoped<IPeople, PeopleService>();
         builder.Services.AddScoped<IRun, RunService>();
         builder.Services.AddScoped<IPeopleHelper, PeopleHelpers>();
-        builder.Services.AddScoped<IChallengeService, ChallengeService>();
+        builder.Services.AddScoped<IChallengeRepository, ChallengeRepository>();
         builder.Services.Configure<FirebaseConfig>(
             builder.Configuration.GetSection("Firebase"));
         builder.Services.AddScoped<IPushNotificationService, FirebasePushNotificationService>();
