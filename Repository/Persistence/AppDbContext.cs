@@ -23,13 +23,6 @@ public class AppDbContext : DbContext
             .HasMany(x => x.Notifications)
             .WithOne(x => x.Profile)
             .IsRequired();
-        
-        // Profile to Runs relationship - REMOVE THIS since you configure it below
-        // modelBuilder.Entity<Profile>()
-        //     .HasMany(x => x.Runs)
-        //     .WithOne(x => x.Profile)
-        //     .HasForeignKey(x => x.RunnerId)
-        //     .IsRequired();
     
         // Friend relationships
         modelBuilder.Entity<Friend>()

@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace RunNearMe.Controllers;
 [Route("api/[controller]")]
 [ApiController]
+[Authorize]
 public class ChallengeController : ControllerBase
 {
     private readonly ILogger<ChallengeController> _logger;
@@ -27,7 +28,7 @@ public class ChallengeController : ControllerBase
     /// </summary>
     /// <param name="request"></param>
     /// <returns></returns>
-    [HttpPost("/create-challenge")]
+    [HttpPost("create-challenge")]
     public async Task<IActionResult> CreateChallenge([FromForm] CreateChallengeRequest request)
     {
         _logger.LogInformation("Creating challenge");
@@ -40,7 +41,7 @@ public class ChallengeController : ControllerBase
     /// </summary>
     /// <param name="request"></param>
     /// <returns></returns>
-    [HttpPut("/update-challenge-details")]
+    [HttpPut("update-challenge-details")]
     public async Task<IActionResult> UpdateChallengeDetails([FromForm] UpdateChallengeRequest request)
     {
         _logger.LogInformation("Updating challenge");
@@ -53,7 +54,7 @@ public class ChallengeController : ControllerBase
     /// </summary>
     /// <param name="request"></param>
     /// <returns></returns>
-    [HttpPut("/update-challenge-art")]
+    [HttpPut("update-challenge-art")]
     public async Task<IActionResult> UpdateChallengeArt([FromForm] UpdateChallangeArtRequest request)
     {
         _logger.LogInformation("Updating challenge art");
@@ -66,7 +67,7 @@ public class ChallengeController : ControllerBase
     /// </summary>
     /// <param name="request"></param>
     /// <returns></returns>
-    [HttpDelete("/delete-challenge")]
+    [HttpDelete("delete-challenge")]
     public async Task<IActionResult> DeleteChallenge([FromBody] ChallengeJoinRequest request)
     {
         _logger.LogInformation("Deleting challenge");
@@ -80,7 +81,7 @@ public class ChallengeController : ControllerBase
     /// </summary>
     /// <param name="request"></param>
     /// <returns></returns>
-    [HttpGet("/get-active-challenges")]
+    [HttpGet("get-active-challenges")]
     public async Task<IActionResult> GetActiveChallenges([FromQuery] GetChallengesRequest request)
     {
         _logger.LogInformation("Getting active challenges");
@@ -93,7 +94,7 @@ public class ChallengeController : ControllerBase
     /// </summary>
     /// <param name="request"></param>
     /// <returns></returns>
-    [HttpPost("/join-challenge")]
+    [HttpPost("join-challenge")]
     public async Task<IActionResult> JoinChallenge([FromBody] ChallengeJoinRequest request)
     {
         _logger.LogInformation("Joining challenge");
@@ -106,7 +107,7 @@ public class ChallengeController : ControllerBase
     /// </summary>
     /// <param name="request"></param>
     /// <returns></returns>
-    [HttpPut("/exit-challenge")]
+    [HttpPut("exit-challenge")]
     public async Task<IActionResult> ExitChallenge([FromBody] ChallengeJoinRequest request)
     {
         _logger.LogInformation("Exiting challenge");

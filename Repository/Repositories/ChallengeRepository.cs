@@ -16,6 +16,7 @@ using Repository.Persistence;
 
 namespace Repository.Repositories;
 
+
 public class ChallengeRepository : IChallengeRepository
 {
     private readonly AppDbContext _dbContext;
@@ -206,8 +207,8 @@ public class ChallengeRepository : IChallengeRepository
                 throw new BusinessException(ErrorMessages.PersonNotFound, ErrorCodes.PersonNotFound);
             }
             
-            var alreadyJoined = challenge?.Challengers?.Any(r => r.RunnerId == request.RunnerId);
-            if (alreadyJoined.HasValue)
+            var alreadyJoined = challenge.Challengers.Any(r => r.RunnerId == request.RunnerId);
+            if (alreadyJoined)
             {
                 _logger.LogInformation("Runner already joined the challenge. {RunnerId}, {ChallengeId}", request.RunnerId, request.ChallengeId);
                 throw new BusinessException("Runner already joined this challenge", ErrorCodes.ActionNotAllowed);
@@ -215,6 +216,7 @@ public class ChallengeRepository : IChallengeRepository
             
             _logger.LogInformation("Runner joining the challenge. {RunnerId}, {ChallengeId}", request.RunnerId, request.ChallengeId);
             var challenger = await _peopleHelper.GetValidProfileAsync(request.RunnerId, "PROFILE_NOT_FOUND", "Profile not found");
+            _dbContext.Attach(challenger);
             challenge?.Challengers?.Add(challenger);
             await _dbContext.SaveChangesAsync();   
             _logger.LogInformation("Runner joined the challenge. {RunnerId}, {ChallengeId}", request.RunnerId, request.ChallengeId);
@@ -274,7 +276,7 @@ public class ChallengeRepository : IChallengeRepository
             _logger.LogInformation("Getting challenge list Page: {pageNumber}, Size: {pageSize}", pageNumber, pageSize);
             var query = joined 
                 ? _dbContext.Challenges.Where(c => !c.IsDeleted && c.Challengers.Any(r => r.RunnerId == runnerId) && c.EndsAt > DateTime.UtcNow)
-                : _dbContext.Challenges.Where(c => !c.IsDeleted && c.Challengers.Any(r => r.RunnerId != runnerId) && c.EndsAt > DateTime.UtcNow);
+                : _dbContext.Challenges.Where(c => !c.IsDeleted && c.EndsAt > DateTime.UtcNow);
             
             var challenge = await query
                 .OrderByDescending(c => c.CreatedAt)
