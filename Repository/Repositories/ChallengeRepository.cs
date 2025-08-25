@@ -99,7 +99,7 @@ public class ChallengeRepository : IChallengeRepository
             var challenge = await GetChallengeAsync(request.ChallengeId, onlyIfActive: true, adminRunnerId: request.RunnerId);;
             
             _logger.LogInformation("Challenge found {ChallengeId} Admin {RunnerId}", request.ChallengeId, request.RunnerId);
-            challenge = _mapper.Map<UpdateChallengeRequest, Challenge>(request);
+            _mapper.Map(request, challenge);
             await _dbContext.SaveChangesAsync();
             _logger.LogInformation("Challenge updated successfully {ChallengeId} Admin {RunnerId}",  request.ChallengeId, request.RunnerId);
             return new JoinChallengeResponse
