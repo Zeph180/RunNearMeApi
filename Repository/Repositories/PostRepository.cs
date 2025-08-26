@@ -24,6 +24,7 @@ public class PostRepository : IPostRepository
         try
         {
             _logger.LogInformation("Start create post method");
+            throw new NotImplementedException();
         }
         catch (Exception e)
         {

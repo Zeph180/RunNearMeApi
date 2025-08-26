@@ -3,6 +3,7 @@ using Application.Interfaces.Dtos.Challenge;
 using Application.Interfaces.Dtos.Run;
 using Application.Models.Request.Authentication;
 using Application.Models.Request.Challenge;
+using Application.Models.Request.Posts;
 using Application.Models.Response.People;
 using AutoMapper;
 using Domain.Entities;
@@ -16,6 +17,12 @@ public class MapperService : Profile
 {
     public MapperService()
     {
+        CreateMap<CreatePostRequest, Post>()
+            .ForMember(dest => dest.Caption, opt => opt.MapFrom(src => src.Caption))
+            .ForMember(dest => dest.Location, opt => opt.MapFrom(src => src.Location))
+            .ForMember(dest => dest.ImageUrl, opt => opt.MapFrom(src => src.ImageUrl))
+            .ForMember(dest => dest.RunnerId, opt => opt.MapFrom(src => src.RunnerId));
+        
         CreateMap<UpdateChallengeRequest, Challenge>();
         
         CreateMap<Challenge, ChallengeDto>()
