@@ -175,6 +175,7 @@ public class Program
         builder.Services.AddScoped<IRun, RunService>();
         builder.Services.AddScoped<IPeopleHelper, PeopleHelpers>();
         builder.Services.AddScoped<IChallengeRepository, ChallengeRepository>();
+        builder.Services.AddScoped<IPostRepository, PostRepository>();
         builder.Services.Configure<FirebaseConfig>(
             builder.Configuration.GetSection("Firebase"));
         builder.Services.AddScoped<IPushNotificationService, FirebasePushNotificationService>();
