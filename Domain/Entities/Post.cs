@@ -4,10 +4,10 @@ namespace Domain.Entities;
 
 public class Post
 {
-    public Guid PostId { get; set; }
+    public Guid PostId { get; set; } = Guid.NewGuid();
     public Guid RunnerId { get; set; }
     [MaxLength(500)]
-    public string? Caption { get; set; }
+    public string? Message { get; set; }
     public DateTime CreatedAt { get; set; }
     public bool IsDeleted { get; set; }
     public DateTime? DeletedAt { get; set; }
@@ -21,5 +21,4 @@ public class Post
     public string? Location { get; set; }
     public ICollection<Comment>? Comments { get; set; }
     public ICollection<Like>? Likes { get; set; }
-    public bool Deleted { get; set; }
 }
