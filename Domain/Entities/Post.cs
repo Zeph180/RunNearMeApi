@@ -21,5 +21,4 @@ public class Post
     public string? Location { get; set; }
     public ICollection<Comment>? Comments { get; set; }
     public ICollection<Like>? Likes { get; set; }
-    public bool Deleted { get; set; }
 }

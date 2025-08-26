@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace Application.Interfaces;
 
-public interface IPost
+public interface IPostRepository
 {
     Task<CreatePostResponse> CreatePost(CreatePostRequest request);
     Task<CreatePostResponse> UpdatePost(CreatePostRequest request);
