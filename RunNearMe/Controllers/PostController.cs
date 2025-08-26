@@ -1,12 +1,28 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Application.Interfaces;
+using Application.Models.Request.Posts;
+using Application.Wrappers;
+using Microsoft.AspNetCore.Mvc;
 
 namespace RunNearMe.Controllers;
 
-public class PostController : Controller
+[ApiController]
+[Route("api/[controller]")]
+public class PostController : ControllerBase
 {
-    // GET
-    public IActionResult Index()
+    private readonly ILogger<PostController> _logger;
+    private readonly IPostRepository  _postRepository;
+
+    public PostController(ILogger<PostController> logger, IPostRepository postRepository)
     {
-        return View();
+        _logger = logger;
+        _postRepository = postRepository;
+    }
+
+    [HttpPost("create-post")]
+    public async Task<IActionResult> CreatePost([FromBody] CreatePostRequest request)
+    {
+        _logger.LogInformation("Starting create post controller method");
+        var result = await _postRepository.CreatePost(request);
+        return Ok(ApiResponse<object>.SuccessResponse(result));
     }
 }
