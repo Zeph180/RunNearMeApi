@@ -1,4 +1,5 @@
-﻿using Application.Interfaces.Dtos;
+﻿using Application.Interfaces;
+using Application.Interfaces.Dtos;
 using Application.Interfaces.Dtos.Challenge;
 using Application.Interfaces.Dtos.Run;
 using Application.Models.Request.Authentication;
@@ -17,6 +18,8 @@ public class MapperService : Profile
 {
     public MapperService()
     {
+        CreateMap<Post, CreatePostResponse>();
+        
         CreateMap<CreatePostRequest, Post>()
             .ForMember(dest => dest.Caption, opt => opt.MapFrom(src => src.Caption))
             .ForMember(dest => dest.Location, opt => opt.MapFrom(src => src.Location))
