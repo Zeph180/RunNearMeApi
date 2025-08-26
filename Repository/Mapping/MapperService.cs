@@ -18,7 +18,8 @@ public class MapperService : Profile
 {
     public MapperService()
     {
-        CreateMap<Post, CreatePostResponse>();
+        CreateMap<Post, CreatePostResponse>()
+            .ForMember(dest => dest.Caption, opt => opt.MapFrom(src => src.Message));
         
         CreateMap<CreatePostRequest, Post>()
             .ForMember(dest => dest.Message, opt => opt.MapFrom(src => src.Caption))
