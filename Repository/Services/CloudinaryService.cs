@@ -1,4 +1,6 @@
-﻿using Application.Models.Request.Cloudinary;
+﻿using Application.Errors;
+using Application.Middlewares.ErrorHandling;
+using Application.Models.Request.Cloudinary;
 using Application.Models.Response.Cloudinary;
 using Application.Services;
 using AutoMapper;
@@ -106,7 +108,21 @@ public class CloudinaryService : ICloudinaryService
             Tags = new List<string> { "image" },
             Context = new Dictionary<string, string> { { "type", "image" } }
         };
-        return await UploadFileAsync(requestData.Image, request);
+        var fileUploadResponse = await UploadFileAsync(requestData.Image, request);
+        
+        if (fileUploadResponse == null )
+        {
+            _logger.LogInformation("Failed to upload file with additional data {@additional}", requestData.Additional);
+            throw new BusinessException(ErrorMessages.FileUploadFailed, ErrorCodes.FileUploadFailed);
+        }
+        
+        if (!fileUploadResponse.Success)
+        {
+            _logger.LogError("Failed to upload file with additional data {@additional}", requestData.Additional);
+            throw new BusinessException(fileUploadResponse.ErrorMessage, ErrorCodes.FileUploadFailed);
+        }
+        _logger.LogInformation("File uploaded successfully with additional data {@additional}", requestData.Additional);
+        return fileUploadResponse;
     }
 
     public async Task<bool> DeleteFileAsync(string publicId, string? resourceType = null)

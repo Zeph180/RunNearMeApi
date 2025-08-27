@@ -19,7 +19,7 @@ public class PostController : ControllerBase
     }
 
     [HttpPost("create-post")]
-    public async Task<IActionResult> CreatePost([FromBody] CreatePostRequest request)
+    public async Task<IActionResult> CreatePost([FromForm] CreatePostRequest request)
     {
         _logger.LogInformation("Starting create post controller method");
         var result = await _postRepository.CreatePost(request);

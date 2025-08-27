@@ -27,7 +27,6 @@ public class MapperService : Profile
         CreateMap<CreatePostRequest, Post>()
             .ForMember(dest => dest.Message, opt => opt.MapFrom(src => src.Caption))
             .ForMember(dest => dest.Location, opt => opt.MapFrom(src => src.Location))
-            .ForMember(dest => dest.ImageUrl, opt => opt.MapFrom(src => src.ImageUrl))
             .ForMember(dest => dest.RunnerId, opt => opt.MapFrom(src => src.RunnerId));
         
         CreateMap<UpdateChallengeRequest, Challenge>();

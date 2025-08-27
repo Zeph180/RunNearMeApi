@@ -55,22 +55,15 @@ public class PostRepository : IPostRepository
                 var imageUploadReq = new ImageUploadRequest
                 {
                     Image = request.PostFile,
-                    Folder = "Posts"
+                    Folder = "Posts",
+                    Additional = new Dictionary<string, string>
+                    {
+                        {"Method", "CreatePost"},
+                        {"PostId", postRequest.PostId.ToString()},
+                        {"RunnerId", postRequest.RunnerId.ToString()}
+                    }
                 };
                 var fileUploadResponse = await _cloudinaryService .UploadImageAsync(imageUploadReq);
-
-                if (fileUploadResponse == null )
-                {
-                    _logger.LogInformation("Failed to upload post file {PostId} {RunnerId}", postRequest.PostId, runner.RunnerId);
-                    throw new BusinessException(ErrorMessages.FileUploadFailed, ErrorCodes.FileUploadFailed);
-                }
-                
-                if (!fileUploadResponse.Success)
-                {
-                    _logger.LogError("Failed to upload challenge art for {runnerId} : {ErrorMessage}",  request.RunnerId,  fileUploadResponse.ErrorMessage);
-                    throw new BusinessException(fileUploadResponse.ErrorMessage, ErrorCodes.FileUploadFailed);
-                }
-                _logger.LogInformation("Post file uploaded {PostId} {RunnerId}", postRequest.PostId, runner.RunnerId);
                 postRequest.ImageUrl = fileUploadResponse.Url;
             }
             
@@ -86,7 +79,7 @@ public class PostRepository : IPostRepository
             throw;
         }
     }
-
+    
     public async Task<CreatePostResponse> UpdatePost(UpdatePostRequest request)
     {
         try

@@ -52,7 +52,12 @@ public class ChallengeRepository : IChallengeRepository
            {
                Image = request.ChallengeArt,
                Folder = "ChallengeArts",
-               PublicId = request.Name
+               PublicId = request.Name,
+               Additional = new Dictionary<string, string>
+               {
+                   {"Method", "CreateChallenge"},
+                   {"RunnerId", runner.RunnerId.ToString()},
+               }
            };
             var fileUploadResponse = await _cloudinaryService.UploadImageAsync(imageDetails);
 
@@ -128,7 +133,13 @@ public class ChallengeRepository : IChallengeRepository
             {
                 Image = request.ChallengeArt,
                 Folder = "ChallengeArts",
-                PublicId = challenge?.ImageUrl
+                PublicId = challenge?.ImageUrl,
+                Additional = new Dictionary<string, string>
+                {
+                    {"Method", "UpdateChallengeArt"},
+                    {"ChallengeId", request.ChallengeId.ToString()},
+                    {"RunnerId", request.RunnerId.ToString()},
+                }
             };
             var fileUploadResponse = await _cloudinaryService.UploadImageAsync(imageUploadRequest);
             _logger.LogInformation("Back from uploading challenge art {ChallengeId}",   request.ChallengeId);
