@@ -7,7 +7,7 @@ public interface IPostRepository
 {
     Task<CreatePostResponse> CreatePost(CreatePostRequest request);
     Task<CreatePostResponse> UpdatePost(UpdatePostRequest request);
-    Task<CreatePostResponse> DeletePost(Guid postId, Guid userId);
+    Task<bool> DeletePost(Guid postId, Guid userId);
     Task<CreatePostResponse> React(CreatePostRequest request);
     Task<CreatePostResponse> Comment(CreatePostRequest request);
     Task<CreatePostResponse> SharePost(CreatePostRequest request);

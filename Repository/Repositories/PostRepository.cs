@@ -120,7 +120,7 @@ public class PostRepository : IPostRepository
         }
     }
     
-    public async Task<CreatePostResponse> DeletePost(Guid postId, Guid runnerId)
+    public async Task<bool> DeletePost(Guid postId, Guid runnerId)
     {
         try
         {
@@ -129,7 +129,7 @@ public class PostRepository : IPostRepository
             post.Deleted = true;
             await _context.SaveChangesAsync();
             _logger.LogInformation("Post deleted {PostId} {RunnerId}", post.PostId, post.RunnerId);
-            return _mapper.Map<Post, CreatePostResponse>(post);
+            return true;
         }
         catch (Exception e)
         {
@@ -198,7 +198,7 @@ public class PostRepository : IPostRepository
                 postId, runnerId, isAdmin, isActive, includeLikes, includeComments);
 
             IQueryable<Post> query = _context.Posts.AsQueryable();
-            
+            query = query.Where(p => p.PostId == postId);
             if (!track)
                 query = query.AsNoTracking();
 
@@ -216,13 +216,14 @@ public class PostRepository : IPostRepository
             {
                 query = query.Where(p => p.RunnerId == runnerId);
             }
+            
 
             if (isActive)
             {
                 query = query.Where(p => !p.Deleted);
             }
 
-            var post = await query.FirstOrDefaultAsync(p => p.PostId == postId);
+            var post = await query.FirstOrDefaultAsync();
             
             if (post == null)
             {

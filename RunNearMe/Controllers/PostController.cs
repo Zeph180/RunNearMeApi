@@ -33,4 +33,12 @@ public class PostController : ControllerBase
         var result = await _postRepository.UpdatePost(request);
         return Ok(ApiResponse<object>.SuccessResponse(result));
     }
+
+    [HttpDelete("delete-post")]
+    public async Task<IActionResult> DeletePost([FromQuery] Guid runnerId, [FromQuery] Guid postId)
+    {
+        _logger.LogInformation("start delete post method");
+        var resppose = await _postRepository.DeletePost(postId, runnerId);
+        return Ok(ApiResponse<object>.SuccessResponse(resppose));
+    }
 }
