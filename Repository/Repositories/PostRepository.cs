@@ -85,8 +85,26 @@ public class PostRepository : IPostRepository
         try
         {
             _logger.LogInformation("Start update post method");
-            var post = await GetPostAsync(request.PostId, request.RunnerId, true, true);
+            var post = await GetPostAsync(request.PostId, request.RunnerId, true, true, track: true);
            
+            if (request.PostFile != null)
+            {
+                _logger.LogInformation("Uploading post file {PostId} {RunnerId}", request.PostId, request.RunnerId);
+                var imageUploadReq = new ImageUploadRequest
+                {
+                    Image = request.PostFile,
+                    Folder = "Posts",
+                    Additional = new Dictionary<string, string>
+                    {
+                        {"Method", "CreatePost"},
+                        {"PostId", request.PostId.ToString()},
+                        {"RunnerId", request.RunnerId.ToString()}
+                    }
+                };
+                var fileUploadResponse = await _cloudinaryService .UploadImageAsync(imageUploadReq);
+                post.ImageUrl = fileUploadResponse.Url;
+            }
+            
             _logger.LogInformation("Proceeding to update post {PostId} {RunnerId}", post.PostId, post.RunnerId);
             _mapper.Map(request, post);
             await _context.SaveChangesAsync();
@@ -102,9 +120,22 @@ public class PostRepository : IPostRepository
         }
     }
     
-    public async Task<CreatePostResponse> DeletePost(CreatePostRequest request)
+    public async Task<CreatePostResponse> DeletePost(Guid postId, Guid runnerId)
     {
-        throw new NotImplementedException();
+        try
+        {
+            _logger.LogInformation("Start delete post method {PostId} {RunnerId}", postId, runnerId);
+            var post = await GetPostAsync(postId, runnerId, true, true, track: true);;
+            post.Deleted = true;
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Post deleted {PostId} {RunnerId}", post.PostId, post.RunnerId);
+            return _mapper.Map<Post, CreatePostResponse>(post);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error deleting post for {PostId} {RunnerId}", postId, runnerId);
+            throw;
+        }
     }
 
     public async Task<CreatePostResponse> React(CreatePostRequest request)
@@ -158,7 +189,8 @@ public class PostRepository : IPostRepository
         bool isAdmin = false,
         bool isActive = true,
         bool includeLikes = false,
-        bool includeComments = false)
+        bool includeComments = false,
+        bool track = false)
     {
         try
         {
@@ -166,6 +198,9 @@ public class PostRepository : IPostRepository
                 postId, runnerId, isAdmin, isActive, includeLikes, includeComments);
 
             IQueryable<Post> query = _context.Posts.AsQueryable();
+            
+            if (!track)
+                query = query.AsNoTracking();
 
             if (includeLikes)
             {
