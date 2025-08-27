@@ -6,7 +6,7 @@ namespace Application.Interfaces;
 public interface IPostRepository
 {
     Task<CreatePostResponse> CreatePost(CreatePostRequest request);
-    Task<CreatePostResponse> UpdatePost(CreatePostRequest request);
+    Task<CreatePostResponse> UpdatePost(UpdatePostRequest request);
     Task<CreatePostResponse> DeletePost(CreatePostRequest request);
     Task<CreatePostResponse> React(CreatePostRequest request);
     Task<CreatePostResponse> Comment(CreatePostRequest request);

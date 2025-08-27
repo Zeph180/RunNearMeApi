@@ -1,5 +1,6 @@
 ﻿using Application.Errors;
 using Application.Interfaces;
+using Application.Middlewares.ErrorHandling;
 using Application.Models.Request.Posts;
 using AutoMapper;
 using Domain.Entities;
@@ -55,11 +56,28 @@ public class PostRepository : IPostRepository
         }
     }
 
-    public async Task<CreatePostResponse> UpdatePost(CreatePostRequest request)
+    public async Task<CreatePostResponse> UpdatePost(UpdatePostRequest request)
     {
-        throw new NotImplementedException();
+        try
+        {
+            _logger.LogInformation("Start update post method");
+            var post = await GetPostAsync(request.PostId, request.RunnerId, true, true);
+           
+            _logger.LogInformation("Proceeding to update post {PostId} {RunnerId}", post.PostId, post.RunnerId);
+            _mapper.Map(request, post);
+            await _context.SaveChangesAsync();
+            
+            var updatedPost = await GetPostAsync(request.PostId, request.RunnerId, true, true);
+            _logger.LogInformation("Post updated {PostId} {RunnerId}", updatedPost.PostId, updatedPost.RunnerId);
+            return _mapper.Map<Post, CreatePostResponse>(updatedPost);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error updating post for {RunnerId}", request.RunnerId);
+            throw;
+        }
     }
-
+    
     public async Task<CreatePostResponse> DeletePost(CreatePostRequest request)
     {
         throw new NotImplementedException();
@@ -108,5 +126,58 @@ public class PostRepository : IPostRepository
     public async Task<CreatePostResponse> RemoveMediaFromPost(Guid postId, string mediaId)
     {
         throw new NotImplementedException();
+    }
+    
+    private async Task<Post?> GetPostAsync(
+        Guid postId,
+        Guid runnerId,
+        bool isAdmin = false,
+        bool isActive = true,
+        bool includeLikes = false,
+        bool includeComments = false)
+    {
+        try
+        {
+            _logger.LogInformation("Fetching post. PostId: {PostId}, RunnerId: {RunnerId}, IsAdmin: {IsAdmin}, IsActive: {IsActive}, IncludeLikes: {IncludeLikes}, IncludeComments: {IncludeComments}", 
+                postId, runnerId, isAdmin, isActive, includeLikes, includeComments);
+
+            IQueryable<Post> query = _context.Posts.AsQueryable();
+
+            if (includeLikes)
+            {
+                query = query.Include(p => p.Likes);
+            }
+
+            if (includeComments)
+            {
+                query = query.Include(p => p.Comments);
+            }
+
+            if (isAdmin)
+            {
+                query = query.Where(p => p.RunnerId == runnerId);
+            }
+
+            if (isActive)
+            {
+                query = query.Where(p => !p.Deleted);
+            }
+
+            var post = await query.FirstOrDefaultAsync(p => p.PostId == postId);
+            
+            if (post == null)
+            {
+                _logger.LogInformation(
+                    "Post not found. PostId: {PostId}, RunnerId: {RunnerId}, IsAdmin: {IsAdmin}, IsActive: {IsActive}, IncludeLikes: {IncludeLikes}, IncludeComments: {IncludeComments}", postId, runnerId, isAdmin, isActive, includeLikes, includeComments);
+                throw new BusinessException(ErrorMessages.PostNotFound, ErrorCodes.ResourceNotFound);
+            }
+            
+            return post; 
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching post. PostId: {PostId}, RunnerId: {RunnerId}", postId, runnerId);
+            throw;
+        }
     }
 }
