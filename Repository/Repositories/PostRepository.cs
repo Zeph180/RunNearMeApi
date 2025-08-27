@@ -1,7 +1,9 @@
 ﻿using Application.Errors;
 using Application.Interfaces;
 using Application.Middlewares.ErrorHandling;
+using Application.Models.Request.Cloudinary;
 using Application.Models.Request.Posts;
+using Application.Services;
 using AutoMapper;
 using Domain.Entities;
 using Microsoft.AspNetCore.Http;
@@ -19,19 +21,22 @@ public class PostRepository : IPostRepository
     private readonly IPeopleHelper _peopleHelper;
     private readonly IMapper  _mapper;
     private readonly AppDbContext _context;
+    private readonly ICloudinaryService  _cloudinaryService ;
 
     public PostRepository(
         ILogger<IPostRepository> logger, 
         IConfiguration configuration, 
         IPeopleHelper peopleHelper, 
         IMapper mapper,
-        AppDbContext context)
+        AppDbContext context,
+        ICloudinaryService cloudinary)
     {
         _logger = logger;
         _configuration = configuration;
         _peopleHelper = peopleHelper;
         _mapper = mapper;
         _context = context;
+        _cloudinaryService  = cloudinary;
     }
 
     public async Task<CreatePostResponse> CreatePost(CreatePostRequest request)
@@ -42,7 +47,33 @@ public class PostRepository : IPostRepository
             var runner = await _peopleHelper.GetValidProfileAsync(request.RunnerId, ErrorCodes.PersonNotFound,
                 ErrorMessages.PersonNotFound);
             
-            var postRequest = _mapper.Map<CreatePostRequest, Post>(request); 
+            var postRequest = _mapper.Map<CreatePostRequest, Post>(request);
+
+            if (request.PostFile != null)
+            {
+                _logger.LogInformation("Uploading post file {PostId} {RunnerId}", postRequest.PostId, runner.RunnerId);
+                var imageUploadReq = new ImageUploadRequest
+                {
+                    Image = request.PostFile,
+                    Folder = "Posts"
+                };
+                var fileUploadResponse = await _cloudinaryService .UploadImageAsync(imageUploadReq);
+
+                if (fileUploadResponse == null )
+                {
+                    _logger.LogInformation("Failed to upload post file {PostId} {RunnerId}", postRequest.PostId, runner.RunnerId);
+                    throw new BusinessException(ErrorMessages.FileUploadFailed, ErrorCodes.FileUploadFailed);
+                }
+                
+                if (!fileUploadResponse.Success)
+                {
+                    _logger.LogError("Failed to upload challenge art for {runnerId} : {ErrorMessage}",  request.RunnerId,  fileUploadResponse.ErrorMessage);
+                    throw new BusinessException(fileUploadResponse.ErrorMessage, ErrorCodes.FileUploadFailed);
+                }
+                _logger.LogInformation("Post file uploaded {PostId} {RunnerId}", postRequest.PostId, runner.RunnerId);
+                postRequest.ImageUrl = fileUploadResponse.Url;
+            }
+            
             _logger.LogInformation("Proceeding to create post {PostId} {RunnerId}", postRequest.PostId, runner.RunnerId);
             _context.Posts.Add(postRequest);
             await _context.SaveChangesAsync();

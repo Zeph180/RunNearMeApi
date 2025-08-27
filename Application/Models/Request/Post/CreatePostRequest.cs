@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace Application.Models.Request.Posts;
 
@@ -8,6 +9,6 @@ public class CreatePostRequest
     public required string Caption { get; set; }
     [MaxLength(100)]
     [Url]
-    public string? ImageUrl { get; set; }
+    public IFormFile? PostFile { get; set; }
     public required string Location { get; set; }
 }
