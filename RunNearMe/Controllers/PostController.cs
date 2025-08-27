@@ -25,4 +25,12 @@ public class PostController : ControllerBase
         var result = await _postRepository.CreatePost(request);
         return Ok(ApiResponse<object>.SuccessResponse(result));
     }
+
+    [HttpPut("update-post")]
+    public async Task<IActionResult> UpdatePost([FromBody] UpdatePostRequest request)
+    {
+        _logger.LogInformation("Starting update post controller method");
+        var result = await _postRepository.UpdatePost(request);
+        return Ok(ApiResponse<object>.SuccessResponse(result));
+    }
 }
