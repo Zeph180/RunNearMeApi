@@ -1,5 +1,6 @@
 ﻿using Application.Errors;
 using Application.Interfaces;
+using Application.Interfaces.Dtos.Post;
 using Application.Middlewares.ErrorHandling;
 using Application.Models.Request.Cloudinary;
 using Application.Models.Request.Posts;
@@ -143,9 +144,33 @@ public class PostRepository : IPostRepository
         throw new NotImplementedException();
     }
 
-    public async Task<CreatePostResponse> Comment(CreatePostRequest request)
+    public async Task<CommentDto> Comment(CommentRequest request)
     {
-        throw new NotImplementedException();
+        try
+        {
+            _logger.LogInformation("Start comment repository method {RunnerId} {PostId}", request.RunnerId, request.PostId);
+            
+            var runner = await _peopleHelper.GetValidProfileAsync(request.RunnerId, ErrorMessages.PersonNotFound, ErrorCodes.PersonNotFound);
+            _logger.LogInformation("Runner found RunnerId: {RunnerId}", request.RunnerId);
+            _logger.LogInformation("Proceeding to get post {PostId} {RunnerId}", request.PostId, request.RunnerId);
+            
+            var post = await GetPostAsync(request.PostId, request.RunnerId);
+            _logger.LogInformation("Post found PostId: {PostId}", request.PostId);
+            
+            var comment = _mapper.Map<CommentRequest, Comment>(request);
+            comment.Post = post;
+            comment.Runner = runner;
+            _context.Comments.Add(comment);
+            
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Comment created {CommentId} {RunnerId}", comment.CommentId, request.RunnerId);
+            return _mapper.Map<Comment, CommentDto>(comment);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error commenting for {RunnerId} {PostId}", request.RunnerId, request.PostId);
+            throw;
+        }
     }
 
     public async Task<CreatePostResponse> SharePost(CreatePostRequest request)

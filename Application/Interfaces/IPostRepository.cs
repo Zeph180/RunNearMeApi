@@ -1,4 +1,5 @@
-﻿using Application.Models.Request.Posts;
+﻿using Application.Interfaces.Dtos.Post;
+using Application.Models.Request.Posts;
 using Microsoft.AspNetCore.Http;
 
 namespace Application.Interfaces;
@@ -9,7 +10,7 @@ public interface IPostRepository
     Task<CreatePostResponse> UpdatePost(UpdatePostRequest request);
     Task<bool> DeletePost(Guid postId, Guid userId);
     Task<CreatePostResponse> React(CreatePostRequest request);
-    Task<CreatePostResponse> Comment(CreatePostRequest request);
+    Task<CommentDto> Comment(CommentRequest request);
     Task<CreatePostResponse> SharePost(CreatePostRequest request);
     Task<GetPostResponse> GetPostById(Guid postId);
     Task<List<GetPostResponse>> GetPostsByUser(Guid userId);

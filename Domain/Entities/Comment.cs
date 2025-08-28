@@ -15,4 +15,7 @@ public class Comment
     
     public Guid PostId { get; set; }
     public Post? Post { get; set; }
+    public required Profile Runner { get; set; }
+    
+    public ICollection<Comment>? Replies { get; set; }
 }
