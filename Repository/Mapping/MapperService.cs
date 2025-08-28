@@ -1,6 +1,7 @@
 ﻿using Application.Interfaces;
 using Application.Interfaces.Dtos;
 using Application.Interfaces.Dtos.Challenge;
+using Application.Interfaces.Dtos.Post;
 using Application.Interfaces.Dtos.Run;
 using Application.Models.Request.Authentication;
 using Application.Models.Request.Challenge;
@@ -18,6 +19,9 @@ public class MapperService : Profile
 {
     public MapperService()
     {
+        CreateMap<Comment, CommentDto>();
+        CreateMap<CommentRequest, Comment>();
+        
         CreateMap<UpdatePostRequest, Post>()
             .ForMember(dest => dest.Message, opt => opt.MapFrom(src => src.Caption));
         

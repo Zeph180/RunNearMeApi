@@ -38,7 +38,15 @@ public class PostController : ControllerBase
     public async Task<IActionResult> DeletePost([FromQuery] Guid runnerId, [FromQuery] Guid postId)
     {
         _logger.LogInformation("start delete post method");
-        var resppose = await _postRepository.DeletePost(postId, runnerId);
-        return Ok(ApiResponse<object>.SuccessResponse(resppose));
+        var response = await _postRepository.DeletePost(postId, runnerId);
+        return Ok(ApiResponse<object>.SuccessResponse(response));
+    }
+
+    [HttpPost("comment")]
+    public async Task<IActionResult> Comment([FromBody] CommentRequest request)
+    {
+        _logger.LogInformation("Starting comment controller method");
+        var result = await _postRepository.Comment(request);
+        return Ok(ApiResponse<object>.SuccessResponse(result));
     }
 }

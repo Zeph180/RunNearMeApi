@@ -151,10 +151,12 @@ public class PostRepository : IPostRepository
             _logger.LogInformation("Start comment repository method {RunnerId} {PostId}", request.RunnerId, request.PostId);
             
             var runner = await _peopleHelper.GetValidProfileAsync(request.RunnerId, ErrorMessages.PersonNotFound, ErrorCodes.PersonNotFound);
+            _context.Attach(runner);
             _logger.LogInformation("Runner found RunnerId: {RunnerId}", request.RunnerId);
             _logger.LogInformation("Proceeding to get post {PostId} {RunnerId}", request.PostId, request.RunnerId);
             
             var post = await GetPostAsync(request.PostId, request.RunnerId);
+            _context.Attach(post);
             _logger.LogInformation("Post found PostId: {PostId}", request.PostId);
             
             var comment = _mapper.Map<CommentRequest, Comment>(request);
