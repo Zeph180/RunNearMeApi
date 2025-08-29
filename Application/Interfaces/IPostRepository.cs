@@ -9,7 +9,7 @@ public interface IPostRepository
     Task<CreatePostResponse> CreatePost(CreatePostRequest request);
     Task<CreatePostResponse> UpdatePost(UpdatePostRequest request);
     Task<bool> DeletePost(Guid postId, Guid userId);
-    Task<CreatePostResponse> React(CreatePostRequest request);
+    Task<ReactResponse> React(ReactRequest request);
     Task<CommentDto> Comment(CommentRequest request);
     Task<CreatePostResponse> SharePost(CreatePostRequest request);
     Task<GetPostResponse> GetPostById(Guid postId);

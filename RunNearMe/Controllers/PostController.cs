@@ -49,4 +49,12 @@ public class PostController : ControllerBase
         var result = await _postRepository.Comment(request);
         return Ok(ApiResponse<object>.SuccessResponse(result));
     }
+    
+    [HttpPost("React")]
+    public async Task<IActionResult> React([FromBody] ReactRequest request)
+    {
+        _logger.LogInformation("Starting comment controller method");
+        var result = await _postRepository.React(request);
+        return Ok(ApiResponse<object>.SuccessResponse(result));
+    }
 }

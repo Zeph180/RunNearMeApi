@@ -139,11 +139,6 @@ public class PostRepository : IPostRepository
         }
     }
 
-    public async Task<CreatePostResponse> React(CreatePostRequest request)
-    {
-        throw new NotImplementedException();
-    }
-
     public async Task<CommentDto> Comment(CommentRequest request)
     {
         try
@@ -174,7 +169,43 @@ public class PostRepository : IPostRepository
             throw;
         }
     }
-
+    
+    public async Task<ReactResponse> React(ReactRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Start react repository method {RunnerId} {PostId}", request.RunnerId, request.PostId);
+            _logger.LogInformation("Proceeding to get post {PostId} {RunnerId}", request.PostId, request.RunnerId);
+            var post = (await GetPostAsync(request.PostId, request.RunnerId, includeLikes: true))!;
+            _logger.LogInformation("Post found PostId: {PostId}", request.PostId);
+            _context.Attach(post);
+            var runner = await _peopleHelper.GetValidProfileAsync(request.RunnerId, ErrorMessages.PersonNotFound, ErrorCodes.PersonNotFound);
+            _context.Attach(runner);
+            var like = new Like
+            {
+                PostId = request.PostId,
+                RunnerId = request.RunnerId,
+                Post = post,
+                Liker = runner
+            };
+            post.Likes ??= new List<Like>();
+            bool alreadyLiked = post.Likes.Any(l => l.RunnerId == request.RunnerId);
+            if (alreadyLiked)
+            {
+                _logger.LogInformation("Runner {RunnerId} already liked post {PostId}", request.RunnerId, request.PostId);
+                return new ReactResponse { Reacted = false };
+            }
+            post.Likes.Add(like);
+            await _context.SaveChangesAsync();
+            return new ReactResponse { Reacted = true };
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error reacting for {RunnerId} {PostId}", request.RunnerId, request.PostId);
+            throw;
+        }
+    }
+    
     public async Task<CreatePostResponse> SharePost(CreatePostRequest request)
     {
         throw new NotImplementedException();
