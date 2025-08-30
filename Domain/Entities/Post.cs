@@ -24,4 +24,5 @@ public class Post
     [ForeignKey("RunnerId")]
     public Guid RunnerId { get; set; }
     public required Profile Poster { get; set; }
+    
 }

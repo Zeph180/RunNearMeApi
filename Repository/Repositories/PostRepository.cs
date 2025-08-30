@@ -227,9 +227,14 @@ public class PostRepository : IPostRepository
         }
     }
 
-    public async Task<List<GetPostResponse>> GetPostsByUser(Guid userId)
+    public async Task<List<PostDto>> GetPostsByUser(GetPostsRequest request)
     {
-        throw new NotImplementedException();
+        _logger.LogInformation("Start GetPostsByUser method {RunnerId} IsAdmin: {IsAmin}", request.RunnerId,  request.IsAdmin);
+        _logger.LogInformation("Proceeding to get valid user by {RunnerId}", request.RunnerId);
+        var runner = await _peopleHelper.GetValidProfileAsync(request.RunnerId, ErrorMessages.PersonNotFound, ErrorCodes.PersonNotFound);
+        _logger.LogInformation("Proceed to get postst  {RunnerId} IsAdmin: {IsAmin}", request.RunnerId,  request.IsAdmin);
+        var posts = await GetPostsAsync(request.RunnerId, request.IsAdmin);
+        return _mapper.Map<List<Post>, List<PostDto>>(posts);
     }
 
     public async Task<List<GetPostResponse>> GetFeed(Guid userId, int pageNumber, int pageSize)
@@ -237,9 +242,22 @@ public class PostRepository : IPostRepository
         throw new NotImplementedException();
     }
 
-    public async Task<List<CommentResponse>> GetComments(Guid postId)
+    public async Task<List<CommentDto>> GetComments(GetCommentsRequest request)
     {
-        throw new NotImplementedException();
+       _logger.LogInformation("Start GetComments {RunnerId} {PostId} ",  request.RunnerId, request.PostId);
+       var runner = await _peopleHelper.GetValidProfileAsync(request.RunnerId, ErrorMessages.PersonNotFound, ErrorCodes.PersonNotFound);
+       var post = await GetPostAsync(
+           request.PostId,
+           request.RunnerId,
+           includeComments:  true,
+           commentPage: request.PageNumber,
+           commentPageSize: request.PageSize
+           );
+       _logger.LogInformation("Post found PostId: {PostId}", request.PostId);
+       var comments = post.Comments
+           .Select(c => _mapper.Map<Comment, CommentDto>(c))
+           .ToList();
+       return comments;
     }
 
     public async Task<CreatePostResponse> AddMediaToPost(Guid postId, IFormFile media)
@@ -259,57 +277,102 @@ public class PostRepository : IPostRepository
         bool isActive = true,
         bool includeLikes = false,
         bool includeComments = false,
-        bool includePoster =  false,
+        bool includePoster = false,
         bool track = false,
         int commentPage = 1,
         int commentPageSize = 10)
     {
         try
         {
-            _logger.LogInformation("Fetching post. PostId: {PostId}, RunnerId: {RunnerId}, CommentPage: {CommentPage}, CommentPageSize: {CommentPageSize}", 
-                postId, runnerId, commentPage, commentPageSize);
+            _logger.LogInformation("Fetching single post. PostId: {PostId}", postId);
 
-            IQueryable<Post> query = _context.Posts.AsQueryable();
+            var query = BuildPostQuery(_context.Posts.AsQueryable(), 
+                isAdmin ? runnerId : (Guid?)null, isActive, includeLikes, 
+                includeComments, includePoster, track, commentPage, commentPageSize);
+
             query = query.Where(p => p.PostId == postId);
-            if (!track) query = query.AsNoTracking();
-
-            query = query.AsSplitQuery();
-            
-            if (includeLikes) query = query.Include(p => p.Likes);
-
-            if (includeComments)
-            {
-                query = query.Include(p => p.Comments
-                    .Where(c => c.ParentCommentId == null)
-                    .OrderByDescending(c => c.CreatedAt)
-                    .Skip((commentPage - 1) * commentPageSize)
-                    .Take(commentPageSize));
-            }
-            
-            if (includePoster) query = query.Include(p => p.Poster);
-
-            if (isAdmin) query = query.Where(p => p.RunnerId == runnerId);
-            
-            if (isActive)
-            {
-                query = query.Where(p => !p.IsDeleted);
-            }
 
             var post = await query.FirstOrDefaultAsync();
-            
+        
             if (post == null)
             {
-                _logger.LogInformation(
-                    "Post not found. PostId: {PostId}, RunnerId: {RunnerId}, IsAdmin: {IsAdmin}, IsActive: {IsActive}, IncludeLikes: {IncludeLikes}, IncludeComments: {IncludeComments}", postId, runnerId, isAdmin, isActive, includeLikes, includeComments);
                 throw new BusinessException(ErrorMessages.PostNotFound, ErrorCodes.ResourceNotFound);
             }
-            
+        
             return post; 
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error fetching post. PostId: {PostId}, RunnerId: {RunnerId}", postId, runnerId);
+            _logger.LogError(ex, "Error fetching post. PostId: {PostId}", postId);
             throw;
         }
+    }
+    
+    private async Task<List<Post>> GetPostsAsync(
+        Guid runnerId,
+        bool isAdmin = false,
+        bool isActive = true,
+        bool includeLikes = false,
+        bool includeComments = false,
+        bool includePoster = false,
+        bool track = false,
+        int commentPage = 1,
+        int commentPageSize = 10,
+        int skip = 0,
+        int take = 20)
+    {
+        try
+        {
+            _logger.LogInformation("Fetching multiple posts for RunnerId: {RunnerId}", runnerId);
+
+            var query = BuildPostQuery(_context.Posts.AsQueryable(), 
+                isAdmin ? runnerId : (Guid?)null, isActive, includeLikes, 
+                includeComments, includePoster, track, commentPage, commentPageSize);
+
+            var posts = await query
+                .OrderByDescending(p => p.CreatedAt)
+                .Skip(skip)
+                .Take(take)
+                .ToListAsync();
+        
+            return posts; 
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching posts for RunnerId: {RunnerId}", runnerId);
+            throw;
+        }
+    }
+    
+    private static IQueryable<Post> BuildPostQuery(
+        IQueryable<Post> query,
+        Guid? adminRunnerId = null,
+        bool isActive = true,
+        bool includeLikes = false,
+        bool includeComments = false,
+        bool includePoster = false,
+        bool track = false,
+        int commentPage = 1,
+        int commentPageSize = 10)
+    {
+        if (!track) query = query.AsNoTracking();
+        query = query.AsSplitQuery();
+    
+        if (includeLikes) query = query.Include(p => p.Likes);
+
+        if (includeComments)
+        {
+            query = query.Include(p => p.Comments
+                .Where(c => c.ParentCommentId == null && !c.IsDeleted)
+                .OrderByDescending(c => c.CreatedAt)
+                .Skip((commentPage - 1) * commentPageSize)
+                .Take(commentPageSize));
+        }
+    
+        if (includePoster) query = query.Include(p => p.Poster);
+        if (adminRunnerId.HasValue) query = query.Where(p => p.RunnerId == adminRunnerId.Value);
+        if (isActive) query = query.Where(p => !p.IsDeleted);
+
+        return query;
     }
 }

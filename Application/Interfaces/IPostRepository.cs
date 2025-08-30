@@ -13,9 +13,9 @@ public interface IPostRepository
     Task<CommentDto> Comment(CommentRequest request);
     Task<CreatePostResponse> SharePost(CreatePostRequest request);
     Task<PostDto> GetPostById(GetPostRequest request);
-    Task<List<GetPostResponse>> GetPostsByUser(Guid userId);
+    Task<List<PostDto>> GetPostsByUser(GetPostsRequest request);
     Task<List<GetPostResponse>> GetFeed(Guid userId, int pageNumber, int pageSize);
-    Task<List<CommentResponse>> GetComments(Guid postId);
+    Task<List<CommentDto>> GetComments(GetCommentsRequest request);
     Task<CreatePostResponse> AddMediaToPost(Guid postId, IFormFile media);
     Task<CreatePostResponse> RemoveMediaFromPost(Guid postId, string mediaId);
 }

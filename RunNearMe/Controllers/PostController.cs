@@ -65,4 +65,20 @@ public class PostController : ControllerBase
         var result = await _postRepository.GetPostById(request);
         return Ok(ApiResponse<object>.SuccessResponse(result));
     }
+
+    [HttpGet("get-posts-by-runner-id")]
+    public async Task<IActionResult> GetPostsByUser([FromQuery] GetPostsRequest request)
+    {
+        _logger.LogInformation("Starting get post by runner id controller method");
+        var result = await _postRepository.GetPostsByUser(request);
+        return Ok(ApiResponse<object>.SuccessResponse(result));
+    }
+
+    [HttpGet("get-comments")]
+    public async Task<IActionResult> GetComments([FromQuery] GetCommentsRequest request)
+    {
+        _logger.LogInformation("Starting get comments controller method");
+        var result = await _postRepository.GetComments(request);
+        return Ok(ApiResponse<object>.SuccessResponse(result));
+    }
 }
