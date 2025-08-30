@@ -56,22 +56,66 @@ public class AppDbContext : DbContext
             .HasForeignKey(f => f.RequestTo)
             .OnDelete(DeleteBehavior.Restrict);
         
-        // Run to Profile relationship - CONSOLIDATED CONFIGURATION
-        modelBuilder.Entity<Run>()
-            .HasOne(r => r.Profile)
-            .WithMany(p => p.Runs) // This matches your Profile.Runs property
-            .HasForeignKey(r => r.RunnerId)
-            .OnDelete(DeleteBehavior.NoAction) // Prevent cascade delete conflicts
-            .IsRequired(); // Profile can be null
+        // Run to Profile relationship
+        modelBuilder.Entity<Run>(entity =>
+        {
+            entity.HasKey(r => r.RunId);
+            
+            //Configuring spatial properties
+            entity.Property(r => r.RouteBounds)
+                .HasColumnType("geometry");
+            
+            entity.Property(r => r.StartPoint)
+                .HasColumnType("geometry");
+                
+            entity.Property(r => r.EndPoint)
+                .HasColumnType("geometry");
+            
+            entity.HasOne(r => r.Profile)
+                .WithMany()
+                .HasForeignKey(r => r.RunnerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(r => r.RunnerId);
+            entity.HasIndex(r => r.StartTime);
+            entity.HasIndex(r => r.CreatedAt);
+            
+            //Spatial indexes
+            entity.HasIndex(r => r.Route)
+                .HasDatabaseName("IX_Runs_Route_Spatial");
+            entity.HasIndex(r => r.RouteBounds)
+                .HasDatabaseName("IX_Runs_RouteBounds_Spatial");
+        });
 
         // Configure decimal precision for GPS coordinates
-        modelBuilder.Entity<RunRoutePoint>()
-            .Property(rrp => rrp.Latitude)
-            .HasPrecision(18, 6);
-    
-        modelBuilder.Entity<RunRoutePoint>()
-            .Property(rrp => rrp.Longitude)
-            .HasPrecision(18, 6);
+        modelBuilder.Entity<RunRoutePoint>(entity =>
+        {
+            entity.HasKey(rp => rp.RunRoutePointId);
+            
+            // Configure spatial property
+            entity.Property(rp => rp.Location)
+                .HasColumnType("geometry")
+                .IsRequired();
+
+            // Ignore computed properties
+            entity.Ignore(rp => rp.Latitude);
+            entity.Ignore(rp => rp.Longitude);
+
+            // Relationship
+            entity.HasOne(rp => rp.Run)
+                .WithMany(r => r.RoutePoints)
+                .HasForeignKey(rp => rp.RunId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Indexes
+            entity.HasIndex(rp => rp.RunId);
+            entity.HasIndex(rp => rp.SequenceNumber);
+            entity.HasIndex(rp => rp.Timestamp);
+            
+            // Spatial index
+            entity.HasIndex(rp => rp.Location)
+                .HasDatabaseName("IX_RunRoutePoints_Location_Spatial");
+        });
     }
 
     public DbSet<Runner> Runners { get; set; }

@@ -26,6 +26,7 @@ using Application.Services;
 using CloudinaryDotNet;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http.Features;
+using NetTopologySuite;
 using Repository.Services;
 
 namespace RunNearMe;
@@ -55,8 +56,16 @@ public class Program
         });
         
         //Register DB Context with DI
-        builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(
-            builder.Configuration.GetConnectionString("DefaultConnection")));
+        builder.Services.AddDbContext<AppDbContext>(options =>
+        {
+            options.UseSqlServer(
+                builder.Configuration.GetConnectionString("DefaultConnection"),
+                sqlOptions => sqlOptions.UseNetTopologySuite());
+        });
+        
+        //Register geometry factory
+        builder.Services.AddSingleton(provider =>
+            NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326));
         
         //Add JWT Authentication
         var jwtSettings = builder.Configuration.GetSection("jwtSettings");
