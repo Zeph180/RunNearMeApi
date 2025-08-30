@@ -9,5 +9,5 @@ public class CommentDto
     public Guid RunnerId { get; set; }
     public string? Message { get; set; }
     public DateTime CreatedAt { get; set; }
-    public Like[]? Likes { get; set; }
-}
+    public ICollection<Like> Likes { get; set; }
+} 

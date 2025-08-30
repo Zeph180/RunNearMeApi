@@ -12,7 +12,7 @@ public interface IPostRepository
     Task<ReactResponse> React(ReactRequest request);
     Task<CommentDto> Comment(CommentRequest request);
     Task<CreatePostResponse> SharePost(CreatePostRequest request);
-    Task<GetPostResponse> GetPostById(Guid postId);
+    Task<PostDto> GetPostById(GetPostRequest request);
     Task<List<GetPostResponse>> GetPostsByUser(Guid userId);
     Task<List<GetPostResponse>> GetFeed(Guid userId, int pageNumber, int pageSize);
     Task<List<CommentResponse>> GetComments(Guid postId);

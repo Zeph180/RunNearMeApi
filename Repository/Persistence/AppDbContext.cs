@@ -13,6 +13,25 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder); // Only call this once, at the beginning
 
+        modelBuilder.Entity<Comment>()
+            .HasOne(c => c.ParentComment)
+            .WithMany(c => c.Replies)
+            .HasForeignKey(c => c.ParentCommentId)
+            .OnDelete(DeleteBehavior.Restrict);
+        
+        modelBuilder.Entity<Post>()
+            .HasMany(p => p.Comments)
+            .WithOne(c => c.Post)
+            .HasForeignKey(c => c.PostId)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        
+        modelBuilder.Entity<Post>()
+            .HasOne(p => p.Poster)
+            .WithMany() // or WithMany(profile => profile.Posts) if you have navigation property
+            .HasForeignKey(p => p.RunnerId)
+            .OnDelete(DeleteBehavior.NoAction);
+        
         // Runner configuration
         modelBuilder.Entity<Runner>()
             .HasIndex(r => r.Email)

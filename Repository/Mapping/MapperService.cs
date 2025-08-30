@@ -19,7 +19,15 @@ public class MapperService : Profile
 {
     public MapperService()
     {
+        CreateMap<Domain.Entities.Profile ,Person>();
+
+        CreateMap<Post, PostDto>()
+            .ForMember(dest => dest.Caption, opt => opt.MapFrom(src => src.Message))
+            .ForMember(dest => dest.LikesCount, opt => opt.MapFrom(src => src.Likes != null ? src.Likes.Count : 0))
+            .ForMember(dest => dest.Comments, opt => opt.MapFrom(src => src.Comments));
+        
         CreateMap<Comment, CommentDto>();
+        
         CreateMap<CommentRequest, Comment>();
         
         CreateMap<UpdatePostRequest, Post>()

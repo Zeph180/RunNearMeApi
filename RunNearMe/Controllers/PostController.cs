@@ -57,4 +57,12 @@ public class PostController : ControllerBase
         var result = await _postRepository.React(request);
         return Ok(ApiResponse<object>.SuccessResponse(result));
     }
+
+    [HttpGet("get-post-by-id")]
+    public async Task<IActionResult> GetPostById([FromQuery] GetPostRequest request)
+    {
+        _logger.LogInformation("Starting get post by id controller method");
+        var result = await _postRepository.GetPostById(request);
+        return Ok(ApiResponse<object>.SuccessResponse(result));
+    }
 }

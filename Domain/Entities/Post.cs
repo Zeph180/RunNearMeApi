@@ -1,11 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Domain.Entities;
 
 public class Post
 {
     public Guid PostId { get; set; } = Guid.NewGuid();
-    public Guid RunnerId { get; set; }
     [MaxLength(500)]
     public string? Message { get; set; }
     public DateTime CreatedAt { get; set; }
@@ -21,5 +21,7 @@ public class Post
     public string? Location { get; set; }
     public ICollection<Comment>? Comments { get; set; }
     public ICollection<Like>? Likes { get; set; }
-    public bool Deleted { get; set; }
+    [ForeignKey("RunnerId")]
+    public Guid RunnerId { get; set; }
+    public required Profile Poster { get; set; }
 }

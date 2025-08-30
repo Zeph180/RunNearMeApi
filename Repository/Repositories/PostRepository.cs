@@ -127,7 +127,7 @@ public class PostRepository : IPostRepository
         {
             _logger.LogInformation("Start delete post method {PostId} {RunnerId}", postId, runnerId);
             var post = await GetPostAsync(postId, runnerId, true, true, track: true);;
-            post.Deleted = true;
+            post.IsDeleted = true;
             await _context.SaveChangesAsync();
             _logger.LogInformation("Post deleted {PostId} {RunnerId}", post.PostId, post.RunnerId);
             return true;
@@ -211,9 +211,20 @@ public class PostRepository : IPostRepository
         throw new NotImplementedException();
     }
 
-    public async Task<GetPostResponse> GetPostById(Guid postId)
+    public async Task<PostDto> GetPostById(GetPostRequest request)
     {
-        throw new NotImplementedException();
+        try
+        {
+            _logger.LogInformation("Start get post by id method {PostId} {RunnerId}", request.PostId, request.RunnerId);
+            var post = await GetPostAsync(request.PostId, request.RunnerId, includeLikes: true , includeComments: true, includePoster: true);
+            _logger.LogInformation("Post found PostId: {PostId}", request.PostId);
+            return _mapper.Map<Post, PostDto>(post);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error getting post by id for {RunnerId} {PostId}", request.RunnerId, request.PostId);
+            throw;
+        }
     }
 
     public async Task<List<GetPostResponse>> GetPostsByUser(Guid userId)
@@ -248,37 +259,40 @@ public class PostRepository : IPostRepository
         bool isActive = true,
         bool includeLikes = false,
         bool includeComments = false,
-        bool track = false)
+        bool includePoster =  false,
+        bool track = false,
+        int commentPage = 1,
+        int commentPageSize = 10)
     {
         try
         {
-            _logger.LogInformation("Fetching post. PostId: {PostId}, RunnerId: {RunnerId}, IsAdmin: {IsAdmin}, IsActive: {IsActive}, IncludeLikes: {IncludeLikes}, IncludeComments: {IncludeComments}", 
-                postId, runnerId, isAdmin, isActive, includeLikes, includeComments);
+            _logger.LogInformation("Fetching post. PostId: {PostId}, RunnerId: {RunnerId}, CommentPage: {CommentPage}, CommentPageSize: {CommentPageSize}", 
+                postId, runnerId, commentPage, commentPageSize);
 
             IQueryable<Post> query = _context.Posts.AsQueryable();
             query = query.Where(p => p.PostId == postId);
-            if (!track)
-                query = query.AsNoTracking();
+            if (!track) query = query.AsNoTracking();
 
-            if (includeLikes)
-            {
-                query = query.Include(p => p.Likes);
-            }
+            query = query.AsSplitQuery();
+            
+            if (includeLikes) query = query.Include(p => p.Likes);
 
             if (includeComments)
             {
-                query = query.Include(p => p.Comments);
-            }
-
-            if (isAdmin)
-            {
-                query = query.Where(p => p.RunnerId == runnerId);
+                query = query.Include(p => p.Comments
+                    .Where(c => c.ParentCommentId == null)
+                    .OrderByDescending(c => c.CreatedAt)
+                    .Skip((commentPage - 1) * commentPageSize)
+                    .Take(commentPageSize));
             }
             
+            if (includePoster) query = query.Include(p => p.Poster);
 
+            if (isAdmin) query = query.Where(p => p.RunnerId == runnerId);
+            
             if (isActive)
             {
-                query = query.Where(p => !p.Deleted);
+                query = query.Where(p => !p.IsDeleted);
             }
 
             var post = await query.FirstOrDefaultAsync();
