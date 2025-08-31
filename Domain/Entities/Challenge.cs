@@ -1,8 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Domain.Entities.Base;
 
 namespace Domain.Entities;
 
-public class Challenge
+public class Challenge : SoftDeletableEntity
 {
     public Guid ChallengeId { get; set; }
     public Guid RunnerId { get; set; }
@@ -17,8 +18,8 @@ public class Challenge
     public required string ImageUrl { get; set; }
     [MaxLength(100)]
     public required string PushTopic { get; set; }
-    public DateTime CreatedAt { get; set; }
     public DateTime EndsAt { get; set; }
-    public bool IsDeleted { get; set; }
-    public ICollection<Profile>? Challengers { get; set; }
+    
+    public virtual required Profile Creator { get; set; }
+    public ICollection<ChallengeParticipant>? Challengers { get; set; }
 }

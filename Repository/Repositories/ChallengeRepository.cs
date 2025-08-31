@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Repository.Persistence;
+using Profile = Domain.Entities.Profile;
 
 namespace Repository.Repositories;
 
@@ -86,7 +87,21 @@ public class ChallengeRepository : IChallengeRepository
                 ChallengeId = challenge.ChallengeId,
                 RunnerId = request.RunnerId,
             };
-            await JoinChallenge(adminJoinChallengeRequest);
+
+            try
+            {
+                await JoinChallenge(adminJoinChallengeRequest);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to join admin to challenge {ChallengeId}, rolling back challenge", challenge.ChallengeId);
+                _dbContext.Challenges.Remove(challenge);
+                await _dbContext.SaveChangesAsync();
+                
+                await _cloudinaryService.DeleteFileAsync(fileUploadResponse.PublicId);
+                throw new BusinessException("Failed to join admin as participant");
+            }
+            
             return _mapper.Map<Challenge, ChallengeDto>(challenge);
         }
         catch (Exception e)
@@ -238,7 +253,24 @@ public class ChallengeRepository : IChallengeRepository
             _logger.LogInformation("Runner joining the challenge. {RunnerId}, {ChallengeId}", request.RunnerId, request.ChallengeId);
             var challenger = await _peopleHelper.GetValidProfileAsync(request.RunnerId, "PROFILE_NOT_FOUND", "Profile not found");
             _dbContext.Attach(challenger);
-            challenge?.Challengers?.Add(challenger);
+            var existingParticipation = await _dbContext.ChallengeParticipants
+                .FirstOrDefaultAsync(cp => cp.ChallengeId == request.ChallengeId && cp.RunnerId == request.RunnerId);
+
+            if (existingParticipation != null)
+            {
+                return new JoinChallengeResponse
+                {
+                    Challenge = _mapper.Map<Challenge, ChallengeDto>(challenge),
+                    Status = nameof(StatusEnum.AlreadyParticipating)
+                };
+            }
+
+            var participant = new ChallengeParticipant
+            {
+                RunnerId = challenger.RunnerId,
+                ChallengeId = challenge.ChallengeId,
+            };
+            challenge?.Challengers?.Add(participant);
             await _dbContext.SaveChangesAsync();   
             _logger.LogInformation("Runner joined the challenge. {RunnerId}, {ChallengeId}", request.RunnerId, request.ChallengeId);
             return new JoinChallengeResponse
@@ -275,7 +307,14 @@ public class ChallengeRepository : IChallengeRepository
             
             _logger.LogInformation("Runner exiting the challenge. {RunnerId}, {ChallengeId}", request.RunnerId, request.ChallengeId);
             var challenger = await _peopleHelper.GetValidProfileAsync(request.RunnerId, "PROFILE_NOT_FOUND", "Profile not found");
-            challenge?.Challengers?.Remove(challenger);
+            var participant = new ChallengeParticipant
+            {
+                RunnerId = challenger.RunnerId,
+                ChallengeId = challenge.ChallengeId,
+            };
+            
+            challenge?.Challengers?.Remove(participant);
+            
             await _dbContext.SaveChangesAsync();   
             _logger.LogInformation("Runner exited the challenge. {RunnerId}, {ChallengeId}", request.RunnerId, request.ChallengeId);
             return new JoinChallengeResponse

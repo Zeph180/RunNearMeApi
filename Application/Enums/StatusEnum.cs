@@ -6,5 +6,6 @@ public enum StatusEnum
     Error = 2,
     Warning = 3,
     Info = 4,
-    Failed = 5
+    Failed = 5,
+    AlreadyParticipating = 6,
 }

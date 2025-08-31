@@ -63,7 +63,7 @@ public class RunRepositoryRepository : IRunRepository
         run.DurationInSeconds = request.DurationInSeconds;
         run.AveragePace = request.AveragePace;
         run.MaxPace = request.MaxPace;
-        run.CaloriesBurned = request.CaloriesBurned;
+        run.CaloriesBurned = GetCaloriesBurned(request.DistanceInMeters, profile.Weight, request.DurationInSeconds);
         run.AverageHeartRate = request.AverageHeartRate;
         run.UpdatedAt = DateTime.UtcNow;
         run.Profile = profile;
@@ -223,5 +223,27 @@ public class RunRepositoryRepository : IRunRepository
             .MaxAsync(rp => (int?)rp.SequenceNumber) ?? 0;
         
         return maxSequence + 1;
+    }
+
+    private double GetCaloriesBurned(double distanceInMeters, double weightKg, double durationSeconds)
+    {
+        var paceInMetersPerSecond = GetPaceInMetersPerSecond(distanceInMeters, durationSeconds);
+        var speedKmh = paceInMetersPerSecond * 3.6;
+        var met = speedKmh switch
+        {
+            <= 6 => 6.0,
+            <= 8 => 8.3,
+            <= 10 => 10.0,
+            <= 12 => 11.5,
+            <= 14 => 12.5,
+            _ => 13.5
+        };
+        var durationHours = durationSeconds / 3600.0;
+        return met * weightKg * durationHours;
+    }
+    
+    private double GetPaceInMetersPerSecond(double distanceInMeters, double durationInSeconds)
+    {
+        return distanceInMeters / durationInSeconds;
     }
 }

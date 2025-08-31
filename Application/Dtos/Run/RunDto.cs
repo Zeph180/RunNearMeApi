@@ -10,7 +10,6 @@ public class RunDto
     public double DurationInSeconds { get; set; }
     public double AveragePace { get; set; }
     public double MaxPace { get; set; }
-    public double CaloriesBurned { get; set; }
     public double AverageHeartRate { get; set; }
     public required List<RoutePointDto> RoutePoints  { get; set; }
 }
