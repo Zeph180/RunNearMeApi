@@ -61,31 +61,36 @@ public class AppDbContext : DbContext
         {
             entity.HasKey(r => r.RunId);
             
-            //Configuring spatial properties
+            // Configure spatial properties with SRID 4326 (WGS84 - GPS coordinates)
+            entity.Property(r => r.Route)
+                .HasColumnType("geometry");
+                
             entity.Property(r => r.RouteBounds)
                 .HasColumnType("geometry");
-            
+                
             entity.Property(r => r.StartPoint)
                 .HasColumnType("geometry");
                 
             entity.Property(r => r.EndPoint)
                 .HasColumnType("geometry");
-            
+
+            // Relationships
             entity.HasOne(r => r.Profile)
                 .WithMany()
                 .HasForeignKey(r => r.RunnerId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            entity.HasMany(r => r.RoutePoints)
+                .WithOne(rp => rp.Run)
+                .HasForeignKey(rp => rp.RunId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Indexes for performance
             entity.HasIndex(r => r.RunnerId);
             entity.HasIndex(r => r.StartTime);
             entity.HasIndex(r => r.CreatedAt);
-            
-            //Spatial indexes
-            entity.HasIndex(r => r.Route)
-                .HasDatabaseName("IX_Runs_Route_Spatial");
-            entity.HasIndex(r => r.RouteBounds)
-                .HasDatabaseName("IX_Runs_RouteBounds_Spatial");
         });
+
 
         // Configure decimal precision for GPS coordinates
         modelBuilder.Entity<RunRoutePoint>(entity =>
@@ -111,10 +116,6 @@ public class AppDbContext : DbContext
             entity.HasIndex(rp => rp.RunId);
             entity.HasIndex(rp => rp.SequenceNumber);
             entity.HasIndex(rp => rp.Timestamp);
-            
-            // Spatial index
-            entity.HasIndex(rp => rp.Location)
-                .HasDatabaseName("IX_RunRoutePoints_Location_Spatial");
         });
     }
 

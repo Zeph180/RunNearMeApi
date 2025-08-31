@@ -129,8 +129,6 @@ public class MapperService : Profile
             .ForMember(dest => dest.Latitude, opt => opt.MapFrom(src => src.Latitude))
             .ForMember(dest => dest.Longitude,
                 opt => opt.MapFrom(src => src.Longitude))
-            .ForMember(dest => dest.SequenceNumber,
-                opt => opt.MapFrom(src => src.SequenceNumber))
             .ForMember(dest => dest.Timestamp,
                 opt => opt.MapFrom(src => src.Timestamp));
     }

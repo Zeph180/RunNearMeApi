@@ -21,11 +21,11 @@ public class RunRoutePoint
     
     [Range(0, double.MaxValue)]
     public int SequenceNumber { get; set; }
-
-
+    
     [Range(-90, 90)] public Decimal Latitude => (decimal)Location.Y;
     [Range(-180, 180)]
     public Decimal Longitude => (decimal)Location.X;
     
     public virtual Run Run { get; set; } = null!;
+    public Guid RunnerId => Run.RunnerId;
 }

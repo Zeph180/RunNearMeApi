@@ -12,5 +12,5 @@ public class RunDto
     public double MaxPace { get; set; }
     public double CaloriesBurned { get; set; }
     public double AverageHeartRate { get; set; }
-    public required ICollection<RoutePointDto> RoutePoints  { get; set; }
+    public required List<RoutePointDto> RoutePoints  { get; set; }
 }

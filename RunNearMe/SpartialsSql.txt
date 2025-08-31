@@ -1,0 +1,84 @@
+﻿CREATE SPATIAL INDEX [IX_Runs_Route_Spatial]
+    ON [Runs] ([Route])
+    USING GEOMETRY_GRID
+    WITH (
+    BOUNDING_BOX = (-180, -90, 180, 90),
+    GRIDS = (
+    LEVEL_1 = MEDIUM,
+    LEVEL_2 = MEDIUM,
+    LEVEL_3 = MEDIUM,
+    LEVEL_4 = MEDIUM
+    ),
+    CELLS_PER_OBJECT = 16
+    );
+
+-- Spatial index for RouteBounds column
+CREATE SPATIAL INDEX [IX_Runs_RouteBounds_Spatial]
+    ON [Runs] ([RouteBounds])
+    USING GEOMETRY_GRID
+    WITH (
+    BOUNDING_BOX = (-180, -90, 180, 90),
+    GRIDS = (
+    LEVEL_1 = MEDIUM,
+    LEVEL_2 = MEDIUM,
+    LEVEL_3 = MEDIUM,
+    LEVEL_4 = MEDIUM
+    ),
+    CELLS_PER_OBJECT = 16
+    );
+
+
+-- Spatial index for StartPoint column
+CREATE SPATIAL INDEX [IX_Runs_StartPoint_Spatial]
+    ON [Runs] ([StartPoint])
+    USING GEOMETRY_GRID
+    WITH (
+    BOUNDING_BOX = (-180, -90, 180, 90),
+    GRIDS = (
+    LEVEL_1 = MEDIUM,
+    LEVEL_2 = MEDIUM,
+    LEVEL_3 = MEDIUM,
+    LEVEL_4 = MEDIUM
+    ),
+    CELLS_PER_OBJECT = 16
+    );
+
+-- Spatial index for EndPoint column
+CREATE SPATIAL INDEX [IX_Runs_EndPoint_Spatial]
+    ON [Runs] ([EndPoint])
+    USING GEOMETRY_GRID
+    WITH (
+    BOUNDING_BOX = (-180, -90, 180, 90),
+    GRIDS = (
+    LEVEL_1 = MEDIUM,
+    LEVEL_2 = MEDIUM,
+    LEVEL_3 = MEDIUM,
+    LEVEL_4 = MEDIUM
+    ),
+    CELLS_PER_OBJECT = 16
+    );
+
+-- Spatial index for RunRoutePoints Location column
+CREATE SPATIAL INDEX [IX_RunRoutePoints_Location_Spatial]
+    ON [RunRoutePoints] ([Location])
+    USING GEOMETRY_GRID
+    WITH (
+    BOUNDING_BOX = (-180, -90, 180, 90),
+    GRIDS = (
+    LEVEL_1 = MEDIUM,
+    LEVEL_2 = MEDIUM,
+    LEVEL_3 = MEDIUM,
+    LEVEL_4 = MEDIUM
+    ),
+    CELLS_PER_OBJECT = 16
+    );
+
+-- Optional: Check if indexes were created successfully
+SELECT
+    i.name AS IndexName,
+    t.name AS TableName,
+    i.type_desc AS IndexType
+FROM sys.indexes i
+         INNER JOIN sys.tables t ON i.object_id = t.object_id
+WHERE i.type_desc = 'SPATIAL'
+  AND t.name IN ('Runs', 'RunRoutePoints');

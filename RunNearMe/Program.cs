@@ -181,7 +181,7 @@ public class Program
         builder.Services.AddScoped<IAuthentication, AuthenticationRepository>();
         builder.Services.AddScoped<INotificationService,NotificationService>();
         builder.Services.AddScoped<IPeople, PeopleService>();
-        builder.Services.AddScoped<IRun, RunService>();
+        builder.Services.AddScoped<IRunRepository, RunRepositoryRepository>();
         builder.Services.AddScoped<IPeopleHelper, PeopleHelpers>();
         builder.Services.AddScoped<IChallengeRepository, ChallengeRepository>();
         builder.Services.AddScoped<IPostRepository, PostRepository>();
