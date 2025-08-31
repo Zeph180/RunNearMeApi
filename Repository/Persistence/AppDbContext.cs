@@ -117,6 +117,30 @@ public class AppDbContext : DbContext
             entity.HasIndex(rp => rp.SequenceNumber);
             entity.HasIndex(rp => rp.Timestamp);
         });
+
+        modelBuilder.Entity<Challenge>(entity =>
+        {
+            entity.HasOne(c => c.Creator)
+                .WithMany()
+                .HasForeignKey(c => c.RunnerId)
+                .OnDelete(DeleteBehavior.NoAction); // Change this to NoAction
+        });
+
+        modelBuilder.Entity<ChallengeParticipant>(entity =>
+        {
+            entity.HasOne(cp => cp.Challenge)
+                .WithMany(cp => cp.Challengers)
+                .HasForeignKey(cp => cp.ChallengeId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasOne(cp => cp.Participant)
+                .WithMany(p => p.ChallengeParticipations)
+                .HasForeignKey(cp => cp.RunnerId)
+                .OnDelete(DeleteBehavior.NoAction);
+            
+            entity.HasIndex(cp => new { cp.ChallengeId, cp.RunnerId })
+                .IsUnique();
+        });
     }
 
     public DbSet<Runner> Runners { get; set; }
@@ -128,6 +152,7 @@ public class AppDbContext : DbContext
     public DbSet<Friend> Friends { get; set; }
     public DbSet<Profile> Profiles { get; set; }
     public DbSet<Challenge> Challenges { get; set; }
+    public DbSet<ChallengeParticipant>  ChallengeParticipants { get; set; }
     public DbSet<Group> Groups { get; set; }
     public DbSet<RunRoutePoint> RunRoutePoints { get; set; }
     public DbSet<DeviceToken> DeviceTokens { get; set; }

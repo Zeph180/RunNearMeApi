@@ -23,7 +23,10 @@ public class Profile
     public virtual ICollection<Notification> Notifications { get; set; }  = new List<Notification>();
     public virtual ICollection<Friend>? Friends { get; set; } = new List<Friend>();
     public virtual ICollection<Post>? Posts { get; set; } =  new List<Post>();
-    public virtual ICollection<Challenge>? Challenges { get; set; } = new List<Challenge>();
+    //public virtual ICollection<Challenge>? Challenges { get; set; } = new List<Challenge>();
     public virtual ICollection<Group>? Groups { get; set; } = new List<Group>();
     public virtual DeviceToken? DeviceToken { get; set; }
+    
+    // Group and Challenge relationships through junction tables
+    public virtual ICollection<ChallengeParticipant> ChallengeParticipations { get; set; } = new List<ChallengeParticipant>();
 }
