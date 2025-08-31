@@ -14,4 +14,5 @@ public class ErrorMessages
     public const string NullFile = "File can not be null.";
     public const string FileUploadFailed = "File upload failed.";
     public const string UnHandledException = "An unhandled exception occurred.";
+    public static string PostNotFound = "Post not found.";
 }

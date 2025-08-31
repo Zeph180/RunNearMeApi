@@ -122,6 +122,7 @@ public class PeopleService : IPeople
             .Include(fr => fr.RequestToProfile)
             .Where(fr =>
                 fr.Status == "P" && (fr.RequestTo == requester.RunnerId || fr.RequestFrom == requester.RunnerId))
+            .Skip((pageNumber - 1) * pageSize)
             .Select(fr => fr)
             .ToListAsync();
 

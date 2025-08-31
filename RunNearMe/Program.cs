@@ -26,6 +26,7 @@ using Application.Services;
 using CloudinaryDotNet;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http.Features;
+using NetTopologySuite;
 using Repository.Services;
 
 namespace RunNearMe;
@@ -55,8 +56,16 @@ public class Program
         });
         
         //Register DB Context with DI
-        builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(
-            builder.Configuration.GetConnectionString("DefaultConnection")));
+        builder.Services.AddDbContext<AppDbContext>(options =>
+        {
+            options.UseSqlServer(
+                builder.Configuration.GetConnectionString("DefaultConnection"),
+                sqlOptions => sqlOptions.UseNetTopologySuite());
+        });
+        
+        //Register geometry factory
+        builder.Services.AddSingleton(provider =>
+            NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326));
         
         //Add JWT Authentication
         var jwtSettings = builder.Configuration.GetSection("jwtSettings");
@@ -172,9 +181,10 @@ public class Program
         builder.Services.AddScoped<IAuthentication, AuthenticationRepository>();
         builder.Services.AddScoped<INotificationService,NotificationService>();
         builder.Services.AddScoped<IPeople, PeopleService>();
-        builder.Services.AddScoped<IRun, RunService>();
+        builder.Services.AddScoped<IRunRepository, RunRepositoryRepository>();
         builder.Services.AddScoped<IPeopleHelper, PeopleHelpers>();
         builder.Services.AddScoped<IChallengeRepository, ChallengeRepository>();
+        builder.Services.AddScoped<IPostRepository, PostRepository>();
         builder.Services.Configure<FirebaseConfig>(
             builder.Configuration.GetSection("Firebase"));
         builder.Services.AddScoped<IPushNotificationService, FirebasePushNotificationService>();

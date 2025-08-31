@@ -1,0 +1,378 @@
+﻿using Application.Errors;
+using Application.Interfaces;
+using Application.Interfaces.Dtos.Post;
+using Application.Middlewares.ErrorHandling;
+using Application.Models.Request.Cloudinary;
+using Application.Models.Request.Posts;
+using Application.Services;
+using AutoMapper;
+using Domain.Entities;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Repository.Persistence;
+
+namespace Repository.Repositories;
+
+public class PostRepository : IPostRepository
+{
+    private readonly ILogger<IPostRepository> _logger;
+    private readonly IConfiguration _configuration;
+    private readonly IPeopleHelper _peopleHelper;
+    private readonly IMapper  _mapper;
+    private readonly AppDbContext _context;
+    private readonly ICloudinaryService  _cloudinaryService ;
+
+    public PostRepository(
+        ILogger<IPostRepository> logger, 
+        IConfiguration configuration, 
+        IPeopleHelper peopleHelper, 
+        IMapper mapper,
+        AppDbContext context,
+        ICloudinaryService cloudinary)
+    {
+        _logger = logger;
+        _configuration = configuration;
+        _peopleHelper = peopleHelper;
+        _mapper = mapper;
+        _context = context;
+        _cloudinaryService  = cloudinary;
+    }
+
+    public async Task<CreatePostResponse> CreatePost(CreatePostRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Start create post method");
+            var runner = await _peopleHelper.GetValidProfileAsync(request.RunnerId, ErrorCodes.PersonNotFound,
+                ErrorMessages.PersonNotFound);
+            
+            var postRequest = _mapper.Map<CreatePostRequest, Post>(request);
+
+            if (request.PostFile != null)
+            {
+                _logger.LogInformation("Uploading post file {PostId} {RunnerId}", postRequest.PostId, runner.RunnerId);
+                var imageUploadReq = new ImageUploadRequest
+                {
+                    Image = request.PostFile,
+                    Folder = "Posts",
+                    Additional = new Dictionary<string, string>
+                    {
+                        {"Method", "CreatePost"},
+                        {"PostId", postRequest.PostId.ToString()},
+                        {"RunnerId", postRequest.RunnerId.ToString()}
+                    }
+                };
+                var fileUploadResponse = await _cloudinaryService .UploadImageAsync(imageUploadReq);
+                postRequest.ImageUrl = fileUploadResponse.Url;
+            }
+            
+            _logger.LogInformation("Proceeding to create post {PostId} {RunnerId}", postRequest.PostId, runner.RunnerId);
+            _context.Posts.Add(postRequest);
+            await _context.SaveChangesAsync();
+            var createdPost = await _context.Posts.FirstOrDefaultAsync(p => p.PostId == postRequest.PostId);
+            return _mapper.Map<Post, CreatePostResponse>(createdPost);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error creating post for {RunnerId}", request.RunnerId);
+            throw;
+        }
+    }
+    
+    public async Task<CreatePostResponse> UpdatePost(UpdatePostRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Start update post method");
+            var post = await GetPostAsync(request.PostId, request.RunnerId, true, true, track: true);
+           
+            if (request.PostFile != null)
+            {
+                _logger.LogInformation("Uploading post file {PostId} {RunnerId}", request.PostId, request.RunnerId);
+                var imageUploadReq = new ImageUploadRequest
+                {
+                    Image = request.PostFile,
+                    Folder = "Posts",
+                    Additional = new Dictionary<string, string>
+                    {
+                        {"Method", "CreatePost"},
+                        {"PostId", request.PostId.ToString()},
+                        {"RunnerId", request.RunnerId.ToString()}
+                    }
+                };
+                var fileUploadResponse = await _cloudinaryService .UploadImageAsync(imageUploadReq);
+                post.ImageUrl = fileUploadResponse.Url;
+            }
+            
+            _logger.LogInformation("Proceeding to update post {PostId} {RunnerId}", post.PostId, post.RunnerId);
+            _mapper.Map(request, post);
+            await _context.SaveChangesAsync();
+            
+            var updatedPost = await GetPostAsync(request.PostId, request.RunnerId, true, true);
+            _logger.LogInformation("Post updated {PostId} {RunnerId}", updatedPost.PostId, updatedPost.RunnerId);
+            return _mapper.Map<Post, CreatePostResponse>(updatedPost);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error updating post for {RunnerId}", request.RunnerId);
+            throw;
+        }
+    }
+    
+    public async Task<bool> DeletePost(Guid postId, Guid runnerId)
+    {
+        try
+        {
+            _logger.LogInformation("Start delete post method {PostId} {RunnerId}", postId, runnerId);
+            var post = await GetPostAsync(postId, runnerId, true, true, track: true);;
+            post.IsDeleted = true;
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Post deleted {PostId} {RunnerId}", post.PostId, post.RunnerId);
+            return true;
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error deleting post for {PostId} {RunnerId}", postId, runnerId);
+            throw;
+        }
+    }
+
+    public async Task<CommentDto> Comment(CommentRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Start comment repository method {RunnerId} {PostId}", request.RunnerId, request.PostId);
+            
+            var runner = await _peopleHelper.GetValidProfileAsync(request.RunnerId, ErrorMessages.PersonNotFound, ErrorCodes.PersonNotFound);
+            _context.Attach(runner);
+            _logger.LogInformation("Runner found RunnerId: {RunnerId}", request.RunnerId);
+            _logger.LogInformation("Proceeding to get post {PostId} {RunnerId}", request.PostId, request.RunnerId);
+            
+            var post = await GetPostAsync(request.PostId, request.RunnerId);
+            _context.Attach(post);
+            _logger.LogInformation("Post found PostId: {PostId}", request.PostId);
+            
+            var comment = _mapper.Map<CommentRequest, Comment>(request);
+            comment.Post = post;
+            comment.Runner = runner;
+            _context.Comments.Add(comment);
+            
+            await _context.SaveChangesAsync();
+            _logger.LogInformation("Comment created {CommentId} {RunnerId}", comment.CommentId, request.RunnerId);
+            return _mapper.Map<Comment, CommentDto>(comment);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error commenting for {RunnerId} {PostId}", request.RunnerId, request.PostId);
+            throw;
+        }
+    }
+    
+    public async Task<ReactResponse> React(ReactRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Start react repository method {RunnerId} {PostId}", request.RunnerId, request.PostId);
+            _logger.LogInformation("Proceeding to get post {PostId} {RunnerId}", request.PostId, request.RunnerId);
+            var post = (await GetPostAsync(request.PostId, request.RunnerId, includeLikes: true))!;
+            _logger.LogInformation("Post found PostId: {PostId}", request.PostId);
+            _context.Attach(post);
+            var runner = await _peopleHelper.GetValidProfileAsync(request.RunnerId, ErrorMessages.PersonNotFound, ErrorCodes.PersonNotFound);
+            _context.Attach(runner);
+            var like = new Like
+            {
+                PostId = request.PostId,
+                RunnerId = request.RunnerId,
+                Post = post,
+                Liker = runner
+            };
+            post.Likes ??= new List<Like>();
+            bool alreadyLiked = post.Likes.Any(l => l.RunnerId == request.RunnerId);
+            if (alreadyLiked)
+            {
+                _logger.LogInformation("Runner {RunnerId} already liked post {PostId}", request.RunnerId, request.PostId);
+                return new ReactResponse { Reacted = false };
+            }
+            post.Likes.Add(like);
+            await _context.SaveChangesAsync();
+            return new ReactResponse { Reacted = true };
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error reacting for {RunnerId} {PostId}", request.RunnerId, request.PostId);
+            throw;
+        }
+    }
+    
+    public async Task<CreatePostResponse> SharePost(CreatePostRequest request)
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<PostDto> GetPostById(GetPostRequest request)
+    {
+        try
+        {
+            _logger.LogInformation("Start get post by id method {PostId} {RunnerId}", request.PostId, request.RunnerId);
+            var post = await GetPostAsync(request.PostId, request.RunnerId, includeLikes: true , includeComments: true, includePoster: true);
+            _logger.LogInformation("Post found PostId: {PostId}", request.PostId);
+            return _mapper.Map<Post, PostDto>(post);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Error getting post by id for {RunnerId} {PostId}", request.RunnerId, request.PostId);
+            throw;
+        }
+    }
+
+    public async Task<List<PostDto>> GetPostsByUser(GetPostsRequest request)
+    {
+        _logger.LogInformation("Start GetPostsByUser method {RunnerId} IsAdmin: {IsAmin}", request.RunnerId,  request.IsAdmin);
+        _logger.LogInformation("Proceeding to get valid user by {RunnerId}", request.RunnerId);
+        var runner = await _peopleHelper.GetValidProfileAsync(request.RunnerId, ErrorMessages.PersonNotFound, ErrorCodes.PersonNotFound);
+        _logger.LogInformation("Proceed to get postst  {RunnerId} IsAdmin: {IsAmin}", request.RunnerId,  request.IsAdmin);
+        var posts = await GetPostsAsync(request.RunnerId, request.IsAdmin);
+        return _mapper.Map<List<Post>, List<PostDto>>(posts);
+    }
+
+    public async Task<List<GetPostResponse>> GetFeed(Guid userId, int pageNumber, int pageSize)
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<List<CommentDto>> GetComments(GetCommentsRequest request)
+    {
+       _logger.LogInformation("Start GetComments {RunnerId} {PostId} ",  request.RunnerId, request.PostId);
+       var runner = await _peopleHelper.GetValidProfileAsync(request.RunnerId, ErrorMessages.PersonNotFound, ErrorCodes.PersonNotFound);
+       var post = await GetPostAsync(
+           request.PostId,
+           request.RunnerId,
+           includeComments:  true,
+           commentPage: request.PageNumber,
+           commentPageSize: request.PageSize
+           );
+       _logger.LogInformation("Post found PostId: {PostId}", request.PostId);
+       var comments = post.Comments
+           .Select(c => _mapper.Map<Comment, CommentDto>(c))
+           .ToList();
+       return comments;
+    }
+
+    public async Task<CreatePostResponse> AddMediaToPost(Guid postId, IFormFile media)
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<CreatePostResponse> RemoveMediaFromPost(Guid postId, string mediaId)
+    {
+        throw new NotImplementedException();
+    }
+    
+    private async Task<Post?> GetPostAsync(
+        Guid postId,
+        Guid runnerId,
+        bool isAdmin = false,
+        bool isActive = true,
+        bool includeLikes = false,
+        bool includeComments = false,
+        bool includePoster = false,
+        bool track = false,
+        int commentPage = 1,
+        int commentPageSize = 10)
+    {
+        try
+        {
+            _logger.LogInformation("Fetching single post. PostId: {PostId}", postId);
+
+            var query = BuildPostQuery(_context.Posts.AsQueryable(), 
+                isAdmin ? runnerId : (Guid?)null, isActive, includeLikes, 
+                includeComments, includePoster, track, commentPage, commentPageSize);
+
+            query = query.Where(p => p.PostId == postId);
+
+            var post = await query.FirstOrDefaultAsync();
+        
+            if (post == null)
+            {
+                throw new BusinessException(ErrorMessages.PostNotFound, ErrorCodes.ResourceNotFound);
+            }
+        
+            return post; 
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching post. PostId: {PostId}", postId);
+            throw;
+        }
+    }
+    
+    private async Task<List<Post>> GetPostsAsync(
+        Guid runnerId,
+        bool isAdmin = false,
+        bool isActive = true,
+        bool includeLikes = false,
+        bool includeComments = false,
+        bool includePoster = false,
+        bool track = false,
+        int commentPage = 1,
+        int commentPageSize = 10,
+        int skip = 0,
+        int take = 20)
+    {
+        try
+        {
+            _logger.LogInformation("Fetching multiple posts for RunnerId: {RunnerId}", runnerId);
+
+            var query = BuildPostQuery(_context.Posts.AsQueryable(), 
+                isAdmin ? runnerId : (Guid?)null, isActive, includeLikes, 
+                includeComments, includePoster, track, commentPage, commentPageSize);
+
+            var posts = await query
+                .OrderByDescending(p => p.CreatedAt)
+                .Skip(skip)
+                .Take(take)
+                .ToListAsync();
+        
+            return posts; 
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching posts for RunnerId: {RunnerId}", runnerId);
+            throw;
+        }
+    }
+    
+    private static IQueryable<Post> BuildPostQuery(
+        IQueryable<Post> query,
+        Guid? adminRunnerId = null,
+        bool isActive = true,
+        bool includeLikes = false,
+        bool includeComments = false,
+        bool includePoster = false,
+        bool track = false,
+        int commentPage = 1,
+        int commentPageSize = 10)
+    {
+        if (!track) query = query.AsNoTracking();
+        query = query.AsSplitQuery();
+    
+        if (includeLikes) query = query.Include(p => p.Likes);
+
+        if (includeComments)
+        {
+            query = query.Include(p => p.Comments
+                .Where(c => c.ParentCommentId == null && !c.IsDeleted)
+                .OrderByDescending(c => c.CreatedAt)
+                .Skip((commentPage - 1) * commentPageSize)
+                .Take(commentPageSize));
+        }
+    
+        if (includePoster) query = query.Include(p => p.Poster);
+        if (adminRunnerId.HasValue) query = query.Where(p => p.RunnerId == adminRunnerId.Value);
+        if (isActive) query = query.Where(p => !p.IsDeleted);
+
+        return query;
+    }
+}

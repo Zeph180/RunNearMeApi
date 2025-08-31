@@ -9,7 +9,7 @@ public class AppDbContextFactory :IDesignTimeDbContextFactory<AppDbContext>
     {
         var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
         var connectionString = "Server=localhost;Database=RunNearMe;User Id=sa;Password=Kampala123456;TrustServerCertificate=True";
-        optionsBuilder.UseSqlServer(connectionString);
+        optionsBuilder.UseSqlServer(connectionString, x => x.UseNetTopologySuite());
         return new AppDbContext(optionsBuilder.Options);
     }
 }

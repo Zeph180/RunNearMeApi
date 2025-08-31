@@ -1,8 +1,11 @@
-﻿using Application.Interfaces.Dtos;
+﻿using Application.Interfaces;
+using Application.Interfaces.Dtos;
 using Application.Interfaces.Dtos.Challenge;
+using Application.Interfaces.Dtos.Post;
 using Application.Interfaces.Dtos.Run;
 using Application.Models.Request.Authentication;
 using Application.Models.Request.Challenge;
+using Application.Models.Request.Posts;
 using Application.Models.Response.People;
 using AutoMapper;
 using Domain.Entities;
@@ -16,6 +19,28 @@ public class MapperService : Profile
 {
     public MapperService()
     {
+        CreateMap<Domain.Entities.Profile ,Person>();
+
+        CreateMap<Post, PostDto>()
+            .ForMember(dest => dest.Caption, opt => opt.MapFrom(src => src.Message))
+            .ForMember(dest => dest.LikesCount, opt => opt.MapFrom(src => src.Likes != null ? src.Likes.Count : 0))
+            .ForMember(dest => dest.Comments, opt => opt.MapFrom(src => src.Comments));
+        
+        CreateMap<Comment, CommentDto>();
+        
+        CreateMap<CommentRequest, Comment>();
+        
+        CreateMap<UpdatePostRequest, Post>()
+            .ForMember(dest => dest.Message, opt => opt.MapFrom(src => src.Caption));
+        
+        CreateMap<Post, CreatePostResponse>()
+            .ForMember(dest => dest.Caption, opt => opt.MapFrom(src => src.Message));
+        
+        CreateMap<CreatePostRequest, Post>()
+            .ForMember(dest => dest.Message, opt => opt.MapFrom(src => src.Caption))
+            .ForMember(dest => dest.Location, opt => opt.MapFrom(src => src.Location))
+            .ForMember(dest => dest.RunnerId, opt => opt.MapFrom(src => src.RunnerId));
+        
         CreateMap<UpdateChallengeRequest, Challenge>();
         
         CreateMap<Challenge, ChallengeDto>()
@@ -104,8 +129,6 @@ public class MapperService : Profile
             .ForMember(dest => dest.Latitude, opt => opt.MapFrom(src => src.Latitude))
             .ForMember(dest => dest.Longitude,
                 opt => opt.MapFrom(src => src.Longitude))
-            .ForMember(dest => dest.SequenceNumber,
-                opt => opt.MapFrom(src => src.SequenceNumber))
             .ForMember(dest => dest.Timestamp,
                 opt => opt.MapFrom(src => src.Timestamp));
     }

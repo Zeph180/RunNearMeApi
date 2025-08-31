@@ -6,5 +6,4 @@ public class RoutePointDto
     public Decimal Longitude { get; set; }
     public double? Altitude { get; set; }
     public DateTime Timestamp { get; set; }
-    public int SequenceNumber { get; set; }
 }
